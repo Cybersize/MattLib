@@ -1,0 +1,8 @@
+.build/
+.tools/
+__pycache__/
+*.pyc
+*.rbxl.lock
+*.rbxlx.lock
+coverage.out
+profile.out

@@ -1,0 +1,72 @@
+--!nonstrict
+local Scope = require(script.Parent.Parent.utils.Scope)
+local Diagnostics = require(script.Parent.Parent.utils.Diagnostics)
+local Animator = {}
+Animator.__index = Animator
+function Animator.new(service, reducedMotion)
+	return setmetatable({ service = service, reducedMotion = reducedMotion == true, active = {}, alive = true }, Animator)
+end
+function Animator:Cancel(instance, channel, finish)
+	local channels = self.active[instance]
+	local record = channels and channels[channel or "default"]
+	if not record then return end
+	channels[channel or "default"] = nil
+	if next(channels) == nil then self.active[instance] = nil end
+	record.scope:Destroy()
+	record.tween:Cancel()
+	Diagnostics.add("tweens", -1)
+	if finish then for property, value in record.goals do instance[property] = value end end
+	if finish and record.onComplete then record.onComplete() end
+end
+function Animator:To(instance, goals, duration, options)
+	assert(self.alive, "Animator is destroyed")
+	options = options or {}
+	local channel = options.channel or "default"
+	local previous=(self.active[instance] or {})[channel]
+	if options.merge and previous then
+		local combined=table.clone(previous.goals)
+		for property,value in goals do combined[property]=value end
+		goals=combined
+	end
+	self:Cancel(instance, channel)
+	if self.reducedMotion or duration == 0 then
+		for property, value in goals do instance[property] = value end
+		if options.onComplete then options.onComplete() end
+		return function() end
+	end
+	local tween = self.service:Create(instance, TweenInfo.new(duration or 0.18,
+		options.easing or Enum.EasingStyle.Quad, options.direction or Enum.EasingDirection.Out,
+		options.repeatCount or 0, options.reverses or false), goals)
+	local record = { tween = tween, goals = goals, scope = Scope.new(),onComplete=options.onComplete }
+	self.active[instance] = self.active[instance] or {}
+	self.active[instance][channel] = record
+	Diagnostics.add("tweens", 1)
+	record.scope:Connect(tween.Completed, function(state)
+		if (self.active[instance] or {})[channel] ~= record then return end
+		self.active[instance][channel] = nil
+		if next(self.active[instance]) == nil then self.active[instance] = nil end
+		record.scope:Destroy()
+		Diagnostics.add("tweens", -1)
+		if state == Enum.PlaybackState.Completed and options.onComplete then options.onComplete() end
+	end)
+	tween:Play()
+	return function() if (self.active[instance] or {})[channel] == record then self:Cancel(instance, channel) end end
+end
+function Animator:Forget(instance)
+	local channels = self.active[instance]
+	if channels then for channel in table.clone(channels) do self:Cancel(instance, channel) end end
+end
+function Animator:SetReducedMotion(value)
+	self.reducedMotion = value == true
+	if self.reducedMotion then
+		for instance, channels in table.clone(self.active) do
+			for channel in table.clone(channels) do self:Cancel(instance, channel, true) end
+		end
+	end
+end
+function Animator:Destroy()
+	if not self.alive then return end
+	for instance in table.clone(self.active) do self:Forget(instance) end
+	self.alive = false
+end
+return Animator

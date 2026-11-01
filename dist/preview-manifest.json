@@ -1,0 +1,7 @@
+{
+  "bundle_sha256": "184d489b452b26294d7e0729734893e1d1e2c39df5f880c6070bae6168e87aac",
+  "bytes": 159289,
+  "entrypoint": "Preview.lua",
+  "network_requests_inside_preview": 0,
+  "preview_sha256": "cbca0812dcce860835297acbf4ab17c7f53957bff3f6afac716f1c60efaa8ccf"
+}

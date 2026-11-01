@@ -1,0 +1,18 @@
+-- Minimal menu using the same framework as the full gallery preview.
+local source=game:HttpGet("https://raw.githubusercontent.com/Cybersize/MattLib/main/dist/MattLib.lua")
+local chunk,reason=loadstring(source,"@MattLib/MattLib.lua")
+assert(chunk,reason)
+local MattLib=chunk()
+local app=MattLib.new({id="mattlib-example"})
+local window=app:CreateWindow({Id="main",Title="MattLib",Theme="Dark",Size={680,480},OpenKey="RightShift"})
+local tab=window:AddTab({Title="Main"})
+local section=tab:AddSection({Title="Preview controls"})
+section:AddToggle({Id="enabled",Title="Enable feature",Default=false,Callback=function(enabled)
+    app:Notify({title="Setting changed",message="Enabled: "..tostring(enabled),status="success"})
+end})
+section:AddSlider({Id="volume",Title="Volume",Min=0,Max=100,Default=50})
+section:AddDropdown({Id="choice",Title="Choose an option",Options={"Alpha","Beta","Gamma"},Default="Alpha"})
+section:AddButton({Title="Test notification",Callback=function()
+    app:Notify({title="MattLib",message="The preview is working.",status="success"})
+end})
+return app

@@ -1,0 +1,22 @@
+{
+  "name": "MattLib Development",
+  "tree": {
+    "$className": "DataModel",
+    "ReplicatedStorage": {
+      "MattLib": { "$path": "src" },
+      "AsterSmoke": { "$path": "tests/studio/Smoke.luau" },
+      "AsterExamples": {
+        "$className": "Folder",
+        "Gallery": { "$path": "examples/component-gallery" },
+        "Dashboard": { "$path": "examples/complex-dashboard" },
+        "Basic": { "$path": "examples/basic" },
+        "Declarative": { "$path": "examples/declarative" }
+      }
+    },
+    "StarterPlayer": {
+      "StarterPlayerScripts": {
+        "AsterBootstrap": { "$path": "tests/studio/Bootstrap.client.luau" }
+      }
+    }
+  }
+}

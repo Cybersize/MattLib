@@ -1,0 +1,20 @@
+-- ModuleScript: require this module and call the returned function with MattLib.
+return function(Library)
+	local app=Library.new({id="mattlib-basic"})
+	local window=app:CreateWindow({Id="basic",Title="My Application",Size={620,460},OpenKey="RightShift"})
+	local home=window:AddTab({Title="Home"})
+	local settings=home:AddSection({Title="Settings",Description="Built with the same components as the declarative API."})
+	settings:AddParagraph({Content="A small menu with real state, cleanup, and optional persistence."})
+	local enabled=settings:AddToggle({Id="enabled",Title="Enable feature",Default=false,Callback=function(value) print("Enabled:",value) end})
+	settings:AddSlider({Id="volume",Title="Volume",Min=0,Max=100,Step=1,Default=65})
+	settings:AddButton({Title="Notify",Callback=function() app:Notify({title="Ready",message="Feature enabled: "..tostring(enabled:GetValue())}) end})
+	settings:AddButton({Title="Save profile",Callback=function()
+		local ok,result=app.Config:Save("default")
+		app:Notify({title=if ok then "Saved" else "Save failed",message=tostring(result),status=if ok then "success" else "error"})
+	end})
+	settings:AddButton({Title="Load profile",Callback=function()
+		local ok,result=app.Config:Load("default")
+		app:Notify({title=if ok then "Loaded" else "Load failed",message=result and tostring(result) or "Settings restored",status=if ok then "success" else "error"})
+	end})
+	return {library=app,window=window,Destroy=function() app:Destroy() end}
+end

@@ -1,0 +1,8 @@
+{
+  "tool": "Luau CLI",
+  "preview_sha256": "cbca0812dcce860835297acbf4ab17c7f53957bff3f6afac716f1c60efaa8ccf",
+  "exit_code": 0,
+  "output": "PREVIEW passed: mounted gallery and released every managed resource\n",
+  "stderr": "",
+  "scope": "Actual self-contained Preview.lua and engine double; no native visual or executor claims"
+}
