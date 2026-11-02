@@ -2,7 +2,7 @@
 
 A dependency-free, React-inspired Luau framework that renders native Roblox GUI instances. Functional components, local hooks, shared signals, keyed reconciliation, semantic themes, a component library, window management, and a small menu facade share one renderer.
 
-**New in 1.1:** four selectable designs—**MintGlass, Ember, Vector, Aura**—with distinct navigation, controls, effects and motion. The preview opens a live design picker. [Design API and examples](docs/designs.md).
+**New in 1.2:** animated ribbon/grid wallpapers, generated wallpaper textures, a slimmer icon sidebar, responsive control columns and translucent panels. **MintGlass, Ember, Vector, Aura** remain independently selectable. [Design API and examples](docs/designs.md).
 
 ## Quick preview
 
@@ -12,7 +12,7 @@ Paste this into an environment that provides Roblox client APIs, `game:HttpGet` 
 loadstring(game:HttpGet("https://raw.githubusercontent.com/Cybersize/MattLib/main/Preview.lua"))()
 ```
 
-It opens the complete interactive gallery: four designs, inputs, layouts, notifications, dialogs, themes, configuration and window controls. `Preview.lua` embeds the framework and gallery in one file, so it needs no secondary downloads or runtime ModuleScripts. Re-running replaces the previous MattLib gallery. **RightShift** toggles visibility; a restore tray is available when hidden.
+It opens the complete interactive gallery: four designs, inputs, layouts, notifications, dialogs, themes, configuration and window controls. `Preview.lua` embeds all framework and gallery code and requires no runtime ModuleScripts. Supported executors optionally download one wallpaper PNG from this repository and cache it at `MattLib/wallpapers-v1.png`. Without the image/filesystem capabilities, or when the download fails, native animated artwork remains available. Re-running replaces the previous MattLib gallery. **RightShift** toggles visibility; a restore tray is available when hidden.
 
 To load only the reusable library:
 
@@ -24,7 +24,7 @@ window:SetDesign("Ember") -- MintGlass, Ember, Vector, Aura
 
 [Minimal menu loader](examples/menu-loader.lua) · [Gallery loader](examples/preview-loader.lua) · [Repository](https://github.com/Cybersize/MattLib)
 
-The 1.1 runtime passed 20 native Studio smoke checks, including all four designs. Live executor compatibility and physical-device visual acceptance remain untested; see [verification](docs/verification.md). Studio users should require the supplied ModuleScript instead of using the HTTP loader.
+The 1.2 runtime has native Studio checks for all four designs, actual wallpaper movement, pause/resume and non-overlapping responsive columns. Live executor compatibility and physical-device visual acceptance remain untested; see [verification](docs/verification.md). Studio users should require the supplied ModuleScript instead of using the HTTP loader.
 
 Start with **[dist/MattLib-Showcase.rbxlx](dist/MattLib-Showcase.rbxlx)** in Roblox Studio and press **F5**. It runs native smoke tests and opens the interactive gallery. The **[verification report](docs/verification.md)** distinguishes executed checks from remaining visual/device testing.
 
@@ -81,7 +81,7 @@ Ordinary state changes rerender the affected component subtree, diff properties 
 local Library = require(game:GetService("ReplicatedStorage"):WaitForChild("MattLib"))
 local app = Library.new({ id = "my-menu" })
 local window = app:CreateWindow({ Id = "settings", Title = "Settings", Theme = "Dark" })
-local tab = window:AddTab({ Title = "General" })
+local tab = window:AddTab({ Title = "General", Icon = "controls", Columns = 2 })
 local section = tab:AddSection({ Title = "Preferences" })
 local enabled = section:AddToggle({
     Id = "enabled", Title = "Enable feature", Default = false,
@@ -91,11 +91,11 @@ section:AddSlider({ Id = "volume", Title = "Volume", Min = 0, Max = 100, Default
 enabled:SetValue(true)
 ```
 
-The facade renders the same `Toggle`, `Slider`, `Window`, `Tabs` and `Section` components. Explicit control ids register configuration under `<window Id>/<control Id>`.
+The facade renders the same `Toggle`, `Slider`, `Window`, `Tabs` and `Section` components. `Columns=2` places sections beside one another when the window is wide enough and stacks them when narrow. Explicit control ids register configuration under `<window Id>/<control Id>`.
 
 ## Included components
 
-- Layout: Window, Frame/Container, Row, Column, Stack, Inset, ScrollArea, Section, Collapsible/CollapsibleSection, Separator.
+- Layout: Window, Frame/Container, Row, Column, AdaptiveGrid, Stack, Inset, ScrollArea, Section, Collapsible/CollapsibleSection, Separator, Wallpaper.
 - Navigation and overlays: Tabs/Tab, Sidebar, Modal, Popover, ContextMenu, Tooltip, ConfirmationDialog.
 - Controls: Button, Toggle/Switch, Checkbox, Slider, RangeSlider, Dropdown, SearchableDropdown, MultiSelect, TextInput, NumericInput, ColorPicker, Keybind, RadioGroup, SegmentedControl.
 - Feedback: Text/Label, RichText, Paragraph, Icon, Badge, Toast/Notification, ProgressBar, LoadingIndicator, StatusIndicator.
@@ -130,4 +130,4 @@ python scripts/studio_place.py
 
 The builder resolves static module imports, validates the graph, caches each factory and emits a reproducible bundle plus SHA-256 manifest. It does not concatenate unresolved ModuleScript code. See [docs/development.md](docs/development.md) for Studio verification and the visual/device checklist.
 
-MIT licensed. No upstream framework code, fonts, icon packs or remote media are bundled.
+MIT licensed. No upstream framework code, fonts or icon packs are bundled. The generated wallpaper artwork, source concepts and generation notes are included under [assets](assets/README.md) and docs/concepts.

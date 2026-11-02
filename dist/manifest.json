@@ -1,10 +1,11 @@
 {
-  "bundle_sha256": "e73903f9eb40e45db521178216d1d12f7bdcd8b8f2b7b69f2f9b6af509de23b7",
-  "bytes": 171071,
+  "bundle_sha256": "8bfc023b8e13bbaf836c6415213ece31092ec46faaeb9ec1c762831dd5cf25a0",
+  "bytes": 187354,
   "dependencies": {
     "animation/Animator": [
       "utils/Scope",
-      "utils/Diagnostics"
+      "utils/Diagnostics",
+      "core/Signal"
     ],
     "components/Common": [
       "core/Hooks",
@@ -59,6 +60,11 @@
       "styling/StyleResolver",
       "components/Common"
     ],
+    "components/layout/AdaptiveGrid": [
+      "core/Element",
+      "core/Hooks",
+      "styling/StyleResolver"
+    ],
     "components/layout/Overlays": [
       "core/Element",
       "core/Hooks",
@@ -72,6 +78,12 @@
       "styling/StyleResolver",
       "utils/Scope",
       "components/Common"
+    ],
+    "components/layout/Wallpaper": [
+      "core/Element",
+      "core/Hooks",
+      "utils/Scope",
+      "styling/StyleResolver"
     ],
     "components/layout/Window": [
       "core/Element",
@@ -147,6 +159,8 @@
       "components/layout/Sections",
       "components/layout/Overlays",
       "components/layout/Window",
+      "components/layout/AdaptiveGrid",
+      "components/layout/Wallpaper",
       "components/navigation/Tabs",
       "components/navigation/DesignPicker",
       "components/inputs/Boolean",
@@ -170,7 +184,8 @@
     "runtime/Adapter": [
       "utils/Scope",
       "core/Signal",
-      "utils/Diagnostics"
+      "utils/Diagnostics",
+      "runtime/Wallpapers"
     ],
     "runtime/Input": [
       "utils/Scope",
@@ -179,6 +194,9 @@
     "runtime/Overlays": [
       "utils/Scope",
       "runtime/Input"
+    ],
+    "runtime/Wallpapers": [
+      "core/Signal"
     ],
     "styling/Designs": [
       "styling/Theme"
@@ -202,7 +220,7 @@
       "runtime/Input"
     ]
   },
-  "modules": 36,
-  "source_sha256": "ef3c7893272e8e457d9f919962ed73c65d9e31191dc1a6a8f93c20b7cda27a7b",
-  "version": "1.1.0"
+  "modules": 39,
+  "source_sha256": "e80b6b5adacc4e8321b320d52495f2c5c49379dc60f01f3fbb782d614a3720bf",
+  "version": "1.2.0"
 }

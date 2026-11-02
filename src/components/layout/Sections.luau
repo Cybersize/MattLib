@@ -30,10 +30,10 @@ end
 function Sections.Section(p)
 	local theme=Hooks.useTheme()
 	local mode=theme.design.section
-	local base={background="$surface",backgroundTransparency=if mode=="glass" then 0.08 else 0,borderWidth=1,borderColor="$border",borderTransparency=0.2,
-		radius="$radius.lg",padding="$spacing.lg",gap="$spacing.md"}
+	local base={background="$surface",backgroundTransparency=if mode=="glass" then 0.24 elseif mode=="inspector" then 0.14 else 0,borderWidth=1,borderColor="$border",borderTransparency=0.28,
+		radius="$radius.lg",padding="$spacing.md",gap="$spacing.sm"}
 	if mode=="ruled" then base.backgroundTransparency=1; base.borderWidth=0; base.radius=0; base.padding={8,0,14,0}
-	elseif mode=="soft" then base.background="$raised"; base.backgroundTransparency=0.22; base.borderWidth=0 end
+	elseif mode=="soft" then base.background="$raised"; base.backgroundTransparency=0.27; base.borderWidth=1; base.borderTransparency=0.6 end
 	return h(Sections.Reveal,{name=p.name,order=p.revealOrder or 0,style=Style.merge(base,p.style)}, {
 		p.title and h("Text",{key="heading",text=if mode=="inspector" or mode=="ruled" then string.upper(p.title) else p.title,
 			style={font=if mode=="inspector" then Enum.Font.Code else "$typography.medium",textSize=if mode=="soft" then 18 elseif mode=="inspector" then 12 else 15,

@@ -1,11 +1,14 @@
 {
+  "tool": "Native Roblox Studio Play client",
+  "engine_version": "0.745.0.7451137",
+  "version": "1.2.0",
+  "timestamp_utc": "2026-11-02T03:57:38.202Z",
+  "passed": 23,
+  "failed": 0,
   "viewport": {
     "y": 675,
     "x": 812
   },
-  "version": "1.1.0",
-  "passed": 20,
-  "failed": 0,
   "tests": [
     {
       "name": "functional updates preserve native instances",
@@ -84,15 +87,45 @@
       "passed": true
     },
     {
+      "name": "native adaptive grid wraps without overlap and preserves input identity",
+      "passed": true
+    },
+    {
+      "name": "native wallpaper moves and stops for reduced motion and hidden windows",
+      "passed": true
+    },
+    {
+      "name": "native gallery uses two control columns at screenshot width",
+      "passed": true
+    },
+    {
       "name": "native 360x640 constrained viewport layout",
       "passed": true
     }
   ],
-  "runtime": "Roblox Studio 0.745.0.7451137 real Play client",
-  "recorded_utc": "2026-11-02T03:09:48.164Z",
-  "recorded_local": "2026-11-02T10:09:48.164000+07:00",
-  "bundle_sha256": "e73903f9eb40e45db521178216d1d12f7bdcd8b8f2b7b69f2f9b6af509de23b7",
-  "source_sha256": "ef3c7893272e8e457d9f919962ed73c65d9e31191dc1a6a8f93c20b7cda27a7b",
-  "scope": "Native functional/property/layout checks, including all four designs and 360x640 constrained layers. No physical device or visual screenshot claims.",
-  "visual_capture": "FrameArrived timeout; retry ended when the user stopped Computer Use with physical Escape"
+  "layout_metrics": {
+    "sidebarWidth": 148,
+    "columns": 2,
+    "secondCard": {
+      "y": 103,
+      "x": 475,
+      "w": 285,
+      "h": 191
+    },
+    "viewport": {
+      "y": 640,
+      "x": 790
+    },
+    "firstCard": {
+      "y": 103,
+      "x": 178,
+      "w": 285,
+      "h": 218
+    },
+    "contentWidth": 582
+  },
+  "bundle_sha256": "8bfc023b8e13bbaf836c6415213ece31092ec46faaeb9ec1c762831dd5cf25a0",
+  "native_source_matches_distribution": true,
+  "native_gallery_matches_preview": true,
+  "scope": "Native property, layout, movement, visibility, lifecycle and configuration tests; no live executor or screenshot visual acceptance claim"
 }

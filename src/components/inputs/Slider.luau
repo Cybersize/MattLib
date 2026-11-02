@@ -53,14 +53,14 @@ local function slider(p,range)
 	Hooks.useEffect(function() return function() if capture.current then capture.current() end end end,{min,max,step,p.disabled})
 	local function thumb(ratio,key)
 		return h("Frame",{key=key,style={width=14,height=14,position=UDim2.fromScale(ratio,0.5),anchor=Vector2.new(0.5,0.5),
-			background=if p.disabled then "$disabled" else "$text",backgroundTransparency=0,radius="$radius.pill",zIndex=3}})
+			background=if p.disabled then "$disabled" else "$accent",backgroundTransparency=0,radius="$radius.pill",borderWidth=1,borderColor="$text",zIndex=3}})
 	end
 	local lowRatio,highRatio=(low-min)/(max-min),(high-min)/(max-min)
 	local formatted=if p.format then p.format(value) elseif range then string.format("%g – %g",low,high) else string.format("%g",high)
-	return h("Column",{name=p.name,style=Style.merge({gap=4,paddingX=8},p.style)}, {
+	return h("Column",{name=p.name,style=Style.merge({gap=2,paddingX=4},p.style)}, {
 		h("Row",{}, {
-			h("Text",{text=p.label or (if range then "Range" else "Value"),style={width=UDim.new(1,-120),height=22}}),
-			h("Text",{text=formatted,style={width=112,height=22,textAlign="right",color="$muted",textSize=12}}),
+			h("Text",{text=p.label or (if range then "Range" else "Value"),style={width=UDim.new(1,-74),height=22,textSize=13}}),
+			h("Text",{text=formatted,style={width=66,height=22,textAlign="right",color="$muted",textSize=12}}),
 		}),
 		h("@TextButton",{name=(p.name or (if range then "RangeSlider" else "Slider"))..":Track",ref=track,disabled=p.disabled,role=if range then "range slider" else "slider",
 			accessibleName=p.accessibleName or p.label,accessibleValue=formatted,native={Text=""},

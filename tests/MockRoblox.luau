@@ -32,7 +32,7 @@ local enumNames={
 	UIFlexAlignment={"None","Fill","SpaceBetween","SpaceAround","SpaceEvenly"},UIFlexMode={"None","Grow","Shrink","Fill","Custom"},
 	ApplyStrokeMode={"Border","Contextual"},ScaleType={"Fit","Stretch","Crop"},ScrollingDirection={"X","Y","XY"},
 	ElasticBehavior={"WhenScrollable","Never","Always"},UserInputType={"Keyboard","MouseButton1","MouseButton2","MouseMovement","Touch","Gamepad1"},
-	UserInputState={"Begin","Change","End","Cancel"},PlaybackState={"Completed","Cancelled","Playing"},EasingStyle={"Quad","Linear"},EasingDirection={"Out","In","InOut"},
+	UserInputState={"Begin","Change","End","Cancel"},PlaybackState={"Completed","Cancelled","Playing"},EasingStyle={"Quad","Linear","Sine"},EasingDirection={"Out","In","InOut"},
 	ZIndexBehavior={"Sibling","Global"},ScreenInsets={"CoreUISafeInsets","DeviceSafeInsets","None"},TextTruncate={"None","AtEnd","SplitWord"},
 	KeyCode={"Unknown","Return","Space","Up","Down","Left","Right","Home","End","Escape","Tab","LeftShift","RightShift","LeftControl","RightControl","Backspace","Delete","F1","F2","F3","F4","F5","F6","F7","F8","F9","F10","F11","F12","A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P","Q","R","S","T","U","V","W","X","Y","Z"},
 }
@@ -76,7 +76,7 @@ local text={Text="",TextColor3=Color3.new(),TextTransparency=0,TextSize=14,Font=
 	TextXAlignment=Enum.TextXAlignment.Center,TextYAlignment=Enum.TextYAlignment.Center,TextTruncate=Enum.TextTruncate.None}
 local classProps={Frame={},CanvasGroup={GroupTransparency=0,GroupColor3=Color3.new(1,1,1)},
 	TextLabel={},TextButton={AutoButtonColor=true,Modal=false},TextBox={ClearTextOnFocus=true,MultiLine=false,PlaceholderText="",PlaceholderColor3=Color3.new(),TextEditable=true,CursorPosition=1},
-	ImageLabel={Image="",ImageColor3=Color3.new(1,1,1),ImageTransparency=0,ScaleType=Enum.ScaleType.Stretch},ImageButton={Image="",ImageColor3=Color3.new(1,1,1),ImageTransparency=0,ScaleType=Enum.ScaleType.Stretch,AutoButtonColor=true,Modal=false},
+	ImageLabel={Image="",ImageColor3=Color3.new(1,1,1),ImageTransparency=0,ImageRectOffset=Vector2.new(),ImageRectSize=Vector2.new(),ScaleType=Enum.ScaleType.Stretch},ImageButton={Image="",ImageColor3=Color3.new(1,1,1),ImageTransparency=0,ImageRectOffset=Vector2.new(),ImageRectSize=Vector2.new(),ScaleType=Enum.ScaleType.Stretch,AutoButtonColor=true,Modal=false},
 	ScrollingFrame={CanvasSize=UDim2.new(),AutomaticCanvasSize=Enum.AutomaticSize.None,ScrollBarThickness=12,ScrollBarImageColor3=Color3.new(),ScrollingDirection=Enum.ScrollingDirection.XY,ElasticBehavior=Enum.ElasticBehavior.WhenScrollable,CanvasPosition=Vector2.new()},
 	ScreenGui={ResetOnSpawn=true,ZIndexBehavior=Enum.ZIndexBehavior.Sibling,DisplayOrder=0,IgnoreGuiInset=false,ScreenInsets=Enum.ScreenInsets.CoreUISafeInsets,ClipToDeviceSafeArea=true,Enabled=true},
 	UIListLayout={FillDirection=Enum.FillDirection.Vertical,SortOrder=Enum.SortOrder.Name,Padding=UDim.new(),HorizontalAlignment=Enum.HorizontalAlignment.Left,VerticalAlignment=Enum.VerticalAlignment.Top,

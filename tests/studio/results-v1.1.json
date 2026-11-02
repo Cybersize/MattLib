@@ -1,0 +1,98 @@
+{
+  "viewport": {
+    "y": 675,
+    "x": 812
+  },
+  "version": "1.1.0",
+  "passed": 20,
+  "failed": 0,
+  "tests": [
+    {
+      "name": "functional updates preserve native instances",
+      "passed": true
+    },
+    {
+      "name": "keyed reorder and removal",
+      "passed": true
+    },
+    {
+      "name": "effects and event cleanup",
+      "passed": true
+    },
+    {
+      "name": "native theme and state styles",
+      "passed": true
+    },
+    {
+      "name": "controlled text restores an unaccepted native edit",
+      "passed": true
+    },
+    {
+      "name": "control library creates valid native properties",
+      "passed": true
+    },
+    {
+      "name": "window geometry, visibility and lifecycle",
+      "passed": true
+    },
+    {
+      "name": "native flex and modifiers",
+      "passed": true
+    },
+    {
+      "name": "HttpService config round trip and atomic validation",
+      "passed": true
+    },
+    {
+      "name": "same-id initialization disposes the previous client",
+      "passed": true
+    },
+    {
+      "name": "portals and modal lifecycle",
+      "passed": true
+    },
+    {
+      "name": "menu facade renders shared inputs",
+      "passed": true
+    },
+    {
+      "name": "all four native design layouts preserve state and instances",
+      "passed": true
+    },
+    {
+      "name": "native glow gradient and scale modifiers cleanly change",
+      "passed": true
+    },
+    {
+      "name": "native per-window designs and minimized header sizes",
+      "passed": true
+    },
+    {
+      "name": "native gallery factory MintGlass",
+      "passed": true
+    },
+    {
+      "name": "native gallery factory Ember",
+      "passed": true
+    },
+    {
+      "name": "native gallery factory Vector",
+      "passed": true
+    },
+    {
+      "name": "native gallery factory Aura",
+      "passed": true
+    },
+    {
+      "name": "native 360x640 constrained viewport layout",
+      "passed": true
+    }
+  ],
+  "runtime": "Roblox Studio 0.745.0.7451137 real Play client",
+  "recorded_utc": "2026-11-02T03:09:48.164Z",
+  "recorded_local": "2026-11-02T10:09:48.164000+07:00",
+  "bundle_sha256": "e73903f9eb40e45db521178216d1d12f7bdcd8b8f2b7b69f2f9b6af509de23b7",
+  "source_sha256": "ef3c7893272e8e457d9f919962ed73c65d9e31191dc1a6a8f93c20b7cda27a7b",
+  "scope": "Native functional/property/layout checks, including all four designs and 360x640 constrained layers. No physical device or visual screenshot claims.",
+  "visual_capture": "FrameArrived timeout; retry ended when the user stopped Computer Use with physical Escape"
+}

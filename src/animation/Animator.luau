@@ -1,10 +1,11 @@
 --!nonstrict
 local Scope = require(script.Parent.Parent.utils.Scope)
 local Diagnostics = require(script.Parent.Parent.utils.Diagnostics)
+local Signal = require(script.Parent.Parent.core.Signal)
 local Animator = {}
 Animator.__index = Animator
 function Animator.new(service, reducedMotion)
-	return setmetatable({ service = service, reducedMotion = reducedMotion == true, active = {}, alive = true }, Animator)
+	return setmetatable({ service = service, reducedMotion = reducedMotion == true, motion=Signal.new(reducedMotion~=true), active = {}, alive = true }, Animator)
 end
 function Animator:Cancel(instance, channel, finish)
 	local channels = self.active[instance]
@@ -63,10 +64,12 @@ function Animator:SetReducedMotion(value)
 			for channel in table.clone(channels) do self:Cancel(instance, channel, true) end
 		end
 	end
+	self.motion:set(not self.reducedMotion)
 end
 function Animator:Destroy()
 	if not self.alive then return end
 	for instance in table.clone(self.active) do self:Forget(instance) end
+	self.motion:Destroy()
 	self.alive = false
 end
 return Animator

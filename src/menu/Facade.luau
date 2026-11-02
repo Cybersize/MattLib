@@ -64,7 +64,7 @@ local function propsFor(record)
 	local p={name=record.name,label=o.Title,text=o.Text or o.Title,description=o.Description,style=o.Style,disabled=o.Disabled,accessibleName=o.AccessibleName,
 		min=o.Min,max=o.Max,step=o.Step,options=o.Options,placeholder=o.Placeholder,searchable=o.Searchable,multiple=o.Multiple,
 		multiline=o.Multiline,maxLength=o.MaxLength,variant=o.Variant,format=o.Format,onCommit=o.OnCommit,onTrigger=o.Triggered,
-		glyph=o.Glyph,image=o.Image,size=o.Size,status=o.Status,message=o.Message,content=o.Content}
+		symbol=o.Symbol,glyph=o.Glyph,image=o.Image,size=o.Size,status=o.Status,message=o.Message,content=o.Content}
 	if record.kind=="Button" then p.onClick=o.Callback end
 	if record.kind=="Paragraph" then p.text=o.Content or o.Text or o.Title end
 	return p
@@ -85,19 +85,20 @@ local function ContainerView(p)
 	local children=Element.list(record.children,function(child)
 		return h(if child.container then ContainerView else ControlView,{record=child})
 	end,function(child) return child.id end)
-	return h(if record.kind=="Section" then "Section" elseif record.kind=="Collapsible" then "Collapsible" else "Column",
-		{title=record.options.Title,description=record.options.Description,defaultOpen=record.options.DefaultOpen,style=record.options.Style,revealOrder=p.order or 0},children)
+	return h(if record.kind=="Section" then "Section" elseif record.kind=="Collapsible" then "Collapsible" elseif record.options.Columns then "AdaptiveGrid" else "Column",
+		{title=record.options.Title,description=record.options.Description,defaultOpen=record.options.DefaultOpen,style=record.options.Style,revealOrder=p.order or 0,
+			columns=record.options.Columns,minColumnWidth=record.options.MinColumnWidth,gap=record.options.Gap},children)
 end
 local function WindowView(p)
 	local window=p.window
 	Hooks.useSignal(window.revision)
 	local items={}
 	for _,tab in window.children do
-		table.insert(items,{id=tab.id,title=tab.options.Title or "Tab",content=h(ContainerView,{record=tab})})
+		table.insert(items,{id=tab.id,title=tab.options.Title or "Tab",icon=tab.options.Icon,content=h(ContainerView,{record=tab})})
 	end
 	local o=window.options
 	return h("Window",{id=window.id,name=window.name,title=o.Title or "Application",size=o.Size or {720,500},position=o.Position,
-		minSize=o.MinSize,maxSize=o.MaxSize,fixedSize=o.FixedSize,openKey=o.OpenKey,theme=o.Theme,design=o.Design,windowRef=window.windowRef,
+		minSize=o.MinSize,maxSize=o.MaxSize,fixedSize=o.FixedSize,openKey=o.OpenKey,theme=o.Theme,design=o.Design,wallpaper=o.Wallpaper,windowRef=window.windowRef,
 		onClose=function()
 			window.scope:Delay(if window.library._env.animator.reducedMotion then 0 else window.library.Theme:Get().motion.normal,function() window:Destroy() end)
 			if o.OnClose then o.OnClose() end

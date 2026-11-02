@@ -1,6 +1,6 @@
 # Four selectable designs
 
-MattLib 1.1 includes **MintGlass**, **Ember**, **Vector**, and **Aura**. These presets change the palette, window chrome, navigation layout, control density, corner shapes, section treatment, effects and motion timing. They use the same renderer/components; changing a design retains window geometry, selected tabs, controlled values and local component state.
+MattLib 1.2 includes **MintGlass**, **Ember**, **Vector**, and **Aura**. These presets change the palette, window chrome, navigation layout, control density, corner shapes, section treatment, wallpaper, effects and motion timing. They use the same renderer/components; changing a design retains window geometry, selected tabs, controlled values and local component state.
 
 | API name | Look and navigation | Controls / motion |
 | --- | --- | --- |
@@ -9,7 +9,9 @@ MattLib 1.1 includes **MintGlass**, **Ember**, **Vector**, and **Aura**. These p
 | `Vector` | Midnight/cobalt, workspace-tree navigation, compact inspector sections | 34px controls, 4px corners, crisp focus borders, 200ms reveal |
 | `Aura` | Plum/lavender, floating pill navigation and soft inset surfaces | 42px controls, 13px corners, softer hover scaling, 240ms reveal |
 
-Sidebar/tree navigation becomes horizontal below a 600px safe-area width. Horizontal navigation scrolls when needed. These are native implementations of the approved concepts, not full-screen raster UI screenshots. Glass/glow are approximated with native transparency, gradients and layered strokes; there is no live scene blur, shader requirement or downloaded background asset.
+Sidebar/tree navigation becomes horizontal when its own container is below 640px, even on a large monitor. At widths below 900px the sidebar uses 148px; wider layouts use at most 176px. Horizontal navigation scrolls when needed. The control gallery uses two columns whenever its content area can fit two 230px cards and a 12px gap. Resizing retains the same keyed input instances and values.
+
+Every design has animated background artwork: mint ribbons, an orange sweep, cobalt grid lighting or lavender waves. Supported executors load the generated [wallpaper atlas](../assets/wallpapers-v1.png) once and cache it. Native gradients and curved strips provide a fallback in Studio and environments without image capabilities. All controls, text and layouts remain native instances. Panel translucency and layered borders approximate glass/glow; live scene blur and exact concept-image fidelity are not claimed.
 
 Original visual references: [Mint Glass](concepts/mint-glass.png), [Ember](concepts/ember.png), [Vector](concepts/vector.png), [Aura](concepts/aura.png). These are proposal images, not screenshots of the running library.
 
@@ -62,12 +64,12 @@ UI.h("DesignPicker",{presentation="segments"})
 
 By default the picker displays the inherited design and calls `app:SetDesign`. Its default presentation is a dropdown; `presentation="segments"` uses the shared segmented control. Props include `name`, `label`, `value`, `onChange`, `disabled` and `style`. To target a particular facade window, pass `value=window:GetDesign()` and an onChange callback that calls `window:SetDesign(value)` from an application component that tracks that selection.
 
-The standalone Preview.lua opens the **Designs** page. It offers all four choices, interaction examples, intensity/reduced-motion controls and Save appearance. The **Configs** page saves, loads, exports, imports and resets profiles. Preview profiles register the chosen design, effect intensity and reduced-motion setting alongside the normal control values. Facade designs are not implicitly persisted unless the application registers its own design signal; facade control ids continue to persist normally.
+The standalone Preview.lua opens the **Appearance** page. It offers all four choices, animated artwork, interaction examples, intensity/reduced-motion controls and Apply appearance. The **Configs** page saves, loads, exports, imports and resets profiles. Preview profiles register the chosen design, effect intensity and reduced-motion setting alongside the normal control values. Facade designs are not implicitly persisted unless the application registers its own design signal; facade control ids continue to persist normally.
 
 ## Effects, palettes and motion
 
 ```lua
-app:SetEffectIntensity(0.5) -- 0..1: accent halos and ambient window lighting
+app:SetEffectIntensity(0.5) -- 0..1: wallpaper visibility and accent halos
 app:SetReducedMotion(true) -- completes active tween goals and prevents new animation
 app:SetTheme("Light")       -- light surfaces; retains the chosen design and its accent
 app:SetTheme("Dark")        -- restores the chosen design's dark palette
@@ -77,6 +79,37 @@ app.Theme:Extend({accent=Color3.fromRGB(115,190,255)}) -- custom tokens
 Choosing a new design applies its preset tokens and resets token overrides/intensity to that preset. The preview explicitly reapplies its registered intensity preference. The reduced-motion runtime setting remains independent. `Theme="Dark"` does not replace an explicitly selected design's accent with the legacy palette. Named Light changes surfaces/text while retaining the design accent. Custom theme tables can override tokens; prefer app:SetTheme for design-aware palette changes and Theme:Extend for custom values.
 
 Motion includes native UIScale hover/press feedback, animated stroke/focus changes, switch thumbs, a travelling tab indicator, crossfading/sliding tab panels, window slide/fade, popover/toast scale/fade and staggered Reveal sections. No RenderStepped polling is added. Every timer/tween and decorator is owned and released on removal; interrupted style goals cannot restore an old design's colors.
+
+Wallpaper uses at most two repeating TweenService animations per visible wallpaper. It pauses when an ancestor is hidden, its ScreenGui is disabled, its window is minimized, reduced motion is enabled, or intensity is zero. Turning motion back on resumes the loops. Resizing recomputes native curve geometry; animation does not rerender the component tree each frame.
+
+## Wallpaper and responsive layouts
+
+```lua
+local window=MattLib:CreateWindow({
+    Title="My UI", Design="MintGlass",
+    Wallpaper={Speed=1,Opacity=0.85}, -- or false to remove the wallpaper
+})
+local tab=window:AddTab({Title="Main",Icon="controls",Columns=2,MinColumnWidth=240,Gap=12})
+tab:AddSection({Title="General"}):AddToggle({Title="Enabled",Default=true})
+tab:AddSection({Title="Output"}):AddSlider({Title="Volume",Default=64})
+```
+
+`Wallpaper` accepts `Speed` (>0, up to 4), `Opacity` (0..1), `Motion=false`, and optional `Image` (an ordinary Roblox image URI or numeric asset id). Custom images are gently panned with a separate light layer. Studio applications can supply a published image using `Wallpaper={Image="rbxassetid://YOUR_IMAGE_ID"}`. No custom-asset APIs or HTTP security changes are required for the native fallback.
+
+Executor texture loading requires `getcustomasset` (or `getsynasset`), `readfile`, `writefile`, and a working HTTP adapter. `makefolder` is used when present. Explicit capability overrides can provide `httpget`, `request` or `http_request`. `MattLib.new({wallpaperAssets=false})` disables texture loading. `app:GetRuntimeInfo()` exposes `wallpaper` (`native`, `loading`, `texture`) and an optional `wallpaperError`; an image-adapter failure does not prevent the GUI from mounting. No remote source code is fetched by the framework.
+
+For a complete atlas already available as a content URI, `MattLib.new({wallpaperImage=uri})` selects the bundled atlas layout (1536x1024, four 768x512 tiles). Keep those dimensions when importing; a separately resized or cropped image should instead use the per-window `Wallpaper.Image` option.
+
+Declarative equivalents:
+
+```lua
+UI.h("Window",{wallpaper={Speed=1,Opacity=0.9}},children)
+UI.h("AdaptiveGrid",{columns=2,minColumnWidth=240,gap=12},sections)
+UI.h("Wallpaper",{image="rbxassetid://YOUR_IMAGE_ID",speed=0.7,opacity=0.8,style={height=160}})
+UI.h("Icon",{symbol="controls",size=20,color="$accent"})
+```
+
+`AdaptiveGrid` measures its own content width and wraps without reparenting its children. Supported built-in line symbols are `home`, `controls`, `layout`, `appearance`, `activity` and `settings`; image and glyph icons remain available.
 
 `Reveal` is also reusable:
 

@@ -2,7 +2,7 @@
 
 Styles are Luau tables with a fixed vocabulary. Unknown keys throw an actionable error. There are no CSS strings, selectors, browser layout rules or implicit cascading.
 
-MattLib 1.1's [four designs](designs.md) supply palettes, navigation, density, geometry and motion. New applications default to MintGlass. Select a preset with `Library.new({design="Vector"})`, `CreateWindow({Design="Aura"})`, or `app:SetDesign(name)` / `window:SetDesign(name)`.
+MattLib 1.2's [four designs](designs.md) supply palettes, navigation, density, geometry, wallpaper and motion. New applications default to MintGlass. Select a preset with `Library.new({design="Vector"})`, `CreateWindow({Design="Aura"})`, or `app:SetDesign(name)` / `window:SetDesign(name)`.
 
 ```lua
 UI.h("Button", {

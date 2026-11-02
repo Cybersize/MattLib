@@ -479,12 +479,100 @@ test("switching designs during a hover tween cannot restore stale colors",functi
 	button.MouseEnter:Fire(); lib:SetDesign("Vector"); Mock.flush(); Mock.advance(1)
 	eq(button.BackgroundColor3,lib.Theme:Get().hover); eq(button:FindFirstChildOfClass("UIScale").Scale,1)
 end)
-test("effect intensity removes glow helpers and window ambience",function()
+test("effect intensity removes glow helpers and wallpaper geometry",function()
 	local lib=new(); local UI=lib.UI
 	local root=UI.mount(UI.h("Window",{},UI.h("Button",{name="glow",text="Glow",variant="primary"}))); Mock.flush()
 	local button=root:Find("glow"); assert(button:FindFirstChild("Matt_halo"))
-	lib:SetEffectIntensity(0); Mock.flush(); eq(button:FindFirstChild("Matt_halo"),nil); eq(root:Find("WindowAtmosphere").BackgroundTransparency,1)
+	lib:SetEffectIntensity(0); Mock.flush(); eq(button:FindFirstChild("Matt_halo"),nil); eq(#root:Find("WindowAtmosphere"):GetChildren(),0)
 	lib:SetEffectIntensity(1); Mock.flush(); assert(button:FindFirstChild("Matt_halo")); raises(function() lib:SetEffectIntensity(2) end,"0..1")
+end)
+test("wallpaper loops remain bounded, pause and resume without rendering each frame",function()
+	local lib=new({reducedMotion=false}); local UI=lib.UI; local window={}
+	local root=UI.mount(UI.h("Window",{windowRef=window})); Mock.flush(); Mock.advance(1)
+	local wallpaper=root:Find("WindowAtmosphere"); eq(wallpaper:GetAttribute("MattWallpaperAnimated"),true); eq(lib:GetDiagnostics().tweens,2)
+	local baseline=lib:GetDiagnostics()
+	Mock.advance(40); eq(lib:GetDiagnostics().renders,baseline.renders); eq(lib:GetDiagnostics().connections,baseline.connections); eq(lib:GetDiagnostics().tweens,2)
+	window.current:Hide(); Mock.flush(); eq(wallpaper:GetAttribute("MattWallpaperAnimated"),false); Mock.advance(1); eq(lib:GetDiagnostics().tweens,0)
+	window.current:Show(); Mock.flush(); Mock.advance(1); eq(lib:GetDiagnostics().tweens,2)
+	lib:SetReducedMotion(true); eq(wallpaper:GetAttribute("MattWallpaperAnimated"),false); eq(lib:GetDiagnostics().tweens,0)
+	lib:SetReducedMotion(false); eq(wallpaper:GetAttribute("MattWallpaperAnimated"),true); eq(lib:GetDiagnostics().tweens,2)
+	window.current:Minimize(); Mock.flush(); Mock.advance(1); eq(lib:GetDiagnostics().tweens,0)
+	window.current:Restore(); Mock.flush(); Mock.advance(1); eq(lib:GetDiagnostics().tweens,2)
+	lib._env.runtime.screen.Enabled=false; eq(lib:GetDiagnostics().tweens,0)
+	lib._env.runtime.screen.Enabled=true; eq(lib:GetDiagnostics().tweens,2)
+	root:Unmount(); eq(lib:GetDiagnostics().tweens,0)
+end)
+test("wallpaper in retained inactive tabs stops its looping tweens",function()
+	local lib=new({reducedMotion=false}); local UI=lib.UI; local change
+	local function App()
+		local value,set=UI.useState("one"); change=set
+		return UI.h("Tabs",{value=value,onChange=set,items={{id="one",title="One",content=UI.h("Wallpaper",{name="tab-wallpaper",style={height=120}})},{id="two",title="Two"}}})
+	end
+	local root=UI.mount(UI.h(App)); Mock.flush(); Mock.advance(1)
+	local wallpaper=root:Find("tab-wallpaper"); eq(wallpaper:GetAttribute("MattWallpaperAnimated"),true); eq(lib:GetDiagnostics().tweens,2)
+	change("two"); Mock.flush(); Mock.advance(1); eq(wallpaper:GetAttribute("MattWallpaperAnimated"),false); eq(lib:GetDiagnostics().tweens,0)
+	change("one"); Mock.flush(); Mock.advance(1); eq(root:Find("tab-wallpaper"),wallpaper); eq(lib:GetDiagnostics().tweens,2)
+end)
+test("wallpaper changes artwork per design and accepts an optional image",function()
+	local lib=new({reducedMotion=false}); local UI=lib.UI
+	local root=UI.mount(UI.h("Wallpaper",{style={height=200}})); Mock.flush()
+	assert(root:Find("WallpaperRibbon1")); lib:SetDesign("Vector"); Mock.flush()
+	assert(root:Find("WallpaperGrid") and root:Find("WallpaperScan")); eq(root:Find("WallpaperRibbon1"),nil); eq(lib:GetDiagnostics().tweens,1)
+	root:Update(UI.h("Wallpaper",{image=123,speed=2,style={height=200}})):Flush(); Mock.flush(); eq(root:Find("WallpaperImage").Image,"rbxassetid://123")
+	lib:SetEffectIntensity(0); Mock.flush(); eq(root:Find("WallpaperImage"),nil); eq(lib:GetDiagnostics().tweens,0)
+	raises(function() UI.mount(UI.h("Wallpaper",{speed=0})) end,"Wallpaper speed")
+end)
+test("adaptive columns follow their container and retain input instances and values",function()
+	local lib=new(); local UI=lib.UI
+	local function content(width)
+		return UI.h("Frame",{style={width=width,height=400}},UI.h("AdaptiveGrid",{name="grid",minColumnWidth=230,gap=12}, {
+			UI.h("TextInput",{key="text",name="grid-input",defaultValue="Before"}),UI.h("Toggle",{key="toggle",name="grid-toggle",defaultValue=true}),
+		}))
+	end
+	local root=UI.mount(content(620)); Mock.flush(); local input,toggle=root:Find("grid-input"),root:Find("grid-toggle")
+	input.Text="Keep this edit"; Mock.flush(); eq(root:Find("grid"):GetAttribute("MattColumns"),2)
+	root:Update(content(320)):Flush(); Mock.flush(); eq(root:Find("grid"):GetAttribute("MattColumns"),1)
+	eq(root:Find("grid-input"),input); eq(input.Text,"Keep this edit"); eq(root:Find("grid-toggle"),toggle); eq(toggle:GetAttribute("AsterValue"),"true")
+	root:Update(content(620)):Flush(); Mock.flush(); eq(root:Find("grid"):GetAttribute("MattColumns"),2); eq(root:Find("grid-input"),input)
+end)
+test("navigation responds to its window width on a large viewport",function()
+	local lib=new(); local UI=lib.UI
+	local function content(width) return UI.h("Frame",{style={width=width,height=400}},UI.h("Tabs",{name="responsive-tabs",items={{id="main",title="Main"}}})) end
+	local root=UI.mount(content(500)); Mock.flush(); eq(root:Find("responsive-tabs"):GetAttribute("MattNavigation"),"top")
+	root:Update(content(800)):Flush(); Mock.flush(); eq(root:Find("responsive-tabs"):GetAttribute("MattNavigation"),"sidebar")
+end)
+test("facade supports responsive section columns and optional wallpaper",function()
+	local lib=new(); local window=lib:CreateWindow({Title="Columns",Wallpaper=false})
+	local tab=window:AddTab({Title="Main",Columns=2,MinColumnWidth=220})
+	tab:AddSection({Title="One"}):AddToggle({Title="Enabled",Default=true}); tab:AddSection({Title="Two"}):AddSlider({Title="Level"})
+	Mock.flush(); assert(window.root:Find("AdaptiveGrid")); eq(window.root:Find("WindowAtmosphere"),nil)
+end)
+test("textured wallpapers download once, use the cache and choose the correct tile",function()
+	local png="\137PNG\r\n\26\n\0\0\0\13IHDR"..string.char(0,0,6,0,0,0,4,0)..string.rep("\0",16)
+	local files,requests={},0
+	local capabilities={readfile=function(path) return files[path] end,writefile=function(path,data) files[path]=data end,makefolder=function() end,
+		getcustomasset=function(path) assert(files[path]==png); return "rbxasset://mattlib-wallpapers.png" end,
+		httpget=function(url) assert(string.find(url,"Cybersize/MattLib/main/assets/wallpapers-v1.png",1,true)); requests+=1; return png end}
+	local lib=new({capabilities=capabilities}); local UI=lib.UI
+	local root=UI.mount(UI.h("Wallpaper")); Mock.flush(); eq(lib:GetRuntimeInfo().wallpaper,"texture"); eq(requests,1)
+	eq(root:Find("Wallpaper"):GetAttribute("MattWallpaperMode"),"texture"); eq(root:Find("WallpaperImage").ImageRectSize,Vector2.new(768,512))
+	lib:SetDesign("Aura"); Mock.flush(); eq(root:Find("WallpaperImage").ImageRectOffset,Vector2.new(768,512)); eq(requests,1)
+	lib:Destroy()
+	local cached=new({capabilities=capabilities}); cached:Mount(cached.UI.h("Wallpaper")); Mock.flush(); eq(cached:GetRuntimeInfo().wallpaper,"texture"); eq(requests,1)
+end)
+test("missing image adapters and failed downloads retain native wallpaper",function()
+	local requests=0
+	local capabilities={readfile=function() return nil end,writefile=function() error("Must not write a bad response") end,
+		getcustomasset=function() error("Must not load invalid bytes") end,httpget=function() requests+=1; return "Not an image" end}
+	local lib=new({capabilities=capabilities}); local root=lib:Mount(lib.UI.h("Wallpaper")); Mock.flush()
+	eq(requests,1); eq(lib:GetRuntimeInfo().wallpaper,"native"); assert(lib:GetRuntimeInfo().wallpaperError)
+	assert(root:Find("WallpaperRibbon1")); eq(root:Find("WallpaperImage"),nil)
+	local offline=new({capabilities=capabilities,wallpaperAssets=false}); offline:Mount(offline.UI.h("Wallpaper")); Mock.flush(); eq(requests,1)
+end)
+test("destroying before the deferred wallpaper fetch prevents network and disk work",function()
+	local lib=new({capabilities={readfile=function() error("Fetch ran after destroy") end,writefile=function() error("Write ran after destroy") end,
+		getcustomasset=function() error("Asset ran after destroy") end,httpget=function() error("HTTP ran after destroy") end}})
+	lib:Mount(lib.UI.h("Wallpaper")); lib:Destroy(); Mock.flush(); eq(lib:GetDiagnostics().tweens,0)
 end)
 test("reduced motion completes and prevents hover tweens",function()
 	local lib=new({reducedMotion=false}); local UI=lib.UI

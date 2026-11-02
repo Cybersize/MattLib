@@ -1,7 +1,8 @@
 {
-  "bundle_sha256": "e73903f9eb40e45db521178216d1d12f7bdcd8b8f2b7b69f2f9b6af509de23b7",
-  "bytes": 187702,
+  "bundle_sha256": "8bfc023b8e13bbaf836c6415213ece31092ec46faaeb9ec1c762831dd5cf25a0",
+  "bytes": 206153,
   "entrypoint": "Preview.lua",
-  "network_requests_inside_preview": 0,
-  "preview_sha256": "1840c224adb44548cb1336b4e1cd57f5647236b513054d532107df14aaecb05c"
+  "optional_wallpaper_requests_on_cache_miss": 1,
+  "preview_sha256": "65880e6dd51678e902bada67f35e5d244a2e4f80554d1259e1fe4523f6f5ad3e",
+  "required_code_downloads_inside_preview": 0
 }

@@ -1,6 +1,6 @@
 {
   "tool": "Luau CLI",
-  "preview_sha256": "1840c224adb44548cb1336b4e1cd57f5647236b513054d532107df14aaecb05c",
+  "preview_sha256": "65880e6dd51678e902bada67f35e5d244a2e4f80554d1259e1fe4523f6f5ad3e",
   "exit_code": 0,
   "output": "PREVIEW passed: mounted gallery and released every managed resource\n",
   "stderr": "",

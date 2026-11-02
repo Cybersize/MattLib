@@ -139,6 +139,55 @@ return function(Library)
 			demo.Destroy(); if not ok then error(err,0) end
 		end)
 	end
+	test("native adaptive grid wraps without overlap and preserves input identity",function(lib,UI)
+		local function view(width)
+			return UI.h("Frame",{style={width=width,height=500}},UI.h("AdaptiveGrid",{name="native-grid",minColumnWidth=230}, {
+				UI.h("Section",{key="first",title="First"},UI.h("TextInput",{name="native-grid-input",defaultValue="Keep me"})),
+				UI.h("Section",{key="second",title="Second"},UI.h("Toggle",{label="Enabled",defaultValue=true})),
+				UI.h("Section",{key="third",title="Third"},UI.h("Text",{text="Another row"})),
+			}))
+		end
+		local function settle() for _=1,5 do RunService.Heartbeat:Wait(); lib:Flush() end end
+		local root=UI.mount(view(620)); settle()
+		local input=root:Find("native-grid-input")
+		local a,b,c=root:Find("GridCell:1"),root:Find("GridCell:2"),root:Find("GridCell:3")
+		equal(root:Find("native-grid"):GetAttribute("MattColumns"),2)
+		assert(a.AbsolutePosition.X+a.AbsoluteSize.X<=b.AbsolutePosition.X+1,"Grid cells overlap horizontally")
+		assert(math.abs(a.AbsolutePosition.Y-b.AbsolutePosition.Y)<1,"First two cards must share a row")
+		assert(c.AbsolutePosition.Y>=a.AbsolutePosition.Y+math.max(a.AbsoluteSize.Y,b.AbsoluteSize.Y),"Next row overlaps")
+		root:Update(view(320)):Flush(); settle(); equal(root:Find("native-grid"):GetAttribute("MattColumns"),1)
+		equal(root:Find("native-grid-input"),input); equal(input.Text,"Keep me")
+		assert(b.AbsolutePosition.Y>=a.AbsolutePosition.Y+a.AbsoluteSize.Y,"Single-column cards overlap")
+	end)
+	test("native wallpaper moves and stops for reduced motion and hidden windows",function(lib,UI)
+		lib:SetReducedMotion(false)
+		local ref={}
+		local root=UI.mount(UI.h("Window",{windowRef=ref,wallpaper={Speed=4}}))
+		for _=1,3 do RunService.Heartbeat:Wait(); lib:Flush() end
+		local ribbon=root:Find("WallpaperRibbon1"); local initial=ribbon.Position
+		task.wait(0.35); assert(ribbon.Position~=initial,"Wallpaper did not move")
+		local wallpaper=root:Find("WindowAtmosphere"); equal(wallpaper:GetAttribute("MattWallpaperAnimated"),true)
+		lib:SetReducedMotion(true); lib:Flush(); equal(wallpaper:GetAttribute("MattWallpaperAnimated"),false); equal(lib:GetDiagnostics().tweens,0)
+		lib:SetReducedMotion(false); lib:Flush(); equal(wallpaper:GetAttribute("MattWallpaperAnimated"),true)
+		ref.current:Hide(); lib:Flush(); task.wait(0.3); equal(wallpaper:GetAttribute("MattWallpaperAnimated"),false); equal(lib:GetDiagnostics().tweens,0)
+		ref.current:Show(); lib:Flush(); task.wait(0.3); equal(wallpaper:GetAttribute("MattWallpaperAnimated"),true)
+	end)
+	test("native gallery uses two control columns at screenshot width",function()
+		local factory=require(game:GetService("ReplicatedStorage").AsterExamples.Gallery)
+		local demo=factory(Library,{page="inputs",reducedMotion=true})
+		local ok,err=xpcall(function()
+			local env=demo.library._env
+			for _,layer in env.runtime.layers do layer.Size=UDim2.fromOffset(790,640) end
+			for _=1,8 do RunService.Heartbeat:Wait(); demo.library:Flush() end
+			local grid=demo.root:Find("GalleryControlsGrid"); equal(grid:GetAttribute("MattColumns"),2)
+			local nav=demo.root:Find("TabNavigation"); assert(nav.AbsoluteSize.X<=148)
+			local a,b=demo.root:Find("GridCell:1"),demo.root:Find("GridCell:2")
+			assert(a.AbsolutePosition.X+a.AbsoluteSize.X<=b.AbsolutePosition.X+1)
+			print("MATTLIB_LAYOUT_METRICS "..HttpService:JSONEncode({viewport={x=790,y=640},columns=grid:GetAttribute("MattColumns"),sidebarWidth=nav.AbsoluteSize.X,
+				contentWidth=grid.AbsoluteSize.X,firstCard={x=a.AbsolutePosition.X,y=a.AbsolutePosition.Y,w=a.AbsoluteSize.X,h=a.AbsoluteSize.Y},secondCard={x=b.AbsolutePosition.X,y=b.AbsolutePosition.Y,w=b.AbsoluteSize.X,h=b.AbsoluteSize.Y}}))
+		end,debug.traceback)
+		demo.Destroy(); if not ok then error(err,0) end
+	end)
 	test("native 360x640 constrained viewport layout",function(lib,UI)
 		local env=lib:_ensure()
 		for _,layer in env.runtime.layers do layer.Size=UDim2.fromOffset(360,640) end

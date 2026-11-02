@@ -70,9 +70,11 @@ class DistributionTests(unittest.TestCase):
         self.assertEqual((build.ROOT/'dist/MattLib.lua').read_text(encoding='utf-8'),build.bundle()[0])
 
     def test_preview_is_current_and_self_contained(self):
-        source,_=build_preview.preview()
+        source,metadata=build_preview.preview()
         self.assertEqual((build.ROOT/'Preview.lua').read_text(encoding='utf-8'),source)
-        self.assertNotIn('game:HttpGet',source)
+        self.assertNotIn('loadstring(',source)
+        self.assertEqual(metadata['required_code_downloads_inside_preview'],0)
+        self.assertEqual(metadata['optional_wallpaper_requests_on_cache_miss'],1)
         self.assertNotIn('require(script',source)
 
     def test_checked_in_distribution_matches_source(self):

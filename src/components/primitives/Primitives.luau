@@ -39,6 +39,25 @@ function Primitives.Paragraph(p)
 end
 function Primitives.Icon(p)
 	local size = p.size or 20
+	if p.symbol then
+		local paths={
+			home={{3,9,10,3},{10,3,17,9},{5,8,5,17},{15,8,15,17},{5,17,15,17},{9,17,9,12},{9,12,12,12},{12,12,12,17}},
+			controls={{3,5,17,5},{3,10,17,10},{3,15,17,15},{7,3,7,7},{13,8,13,12},{8,13,8,17}},
+			layout={{3,3,17,3},{17,3,17,17},{17,17,3,17},{3,17,3,3},{8,3,8,17},{8,9,17,9}},
+			appearance={{4,15,14,5},{14,5,17,8},{17,8,7,18},{7,18,3,18},{3,18,4,15},{11,2,11,5},{9.5,3.5,12.5,3.5}},
+			activity={{2,11,6,11},{6,11,9,4},{9,4,12,16},{12,16,15,9},{15,9,18,9}},
+			settings={{4,4,16,4},{16,4,16,16},{16,16,4,16},{4,16,4,4},{8,8,12,8},{12,8,12,12},{12,12,8,12},{8,12,8,8}},
+		}
+		assert(paths[p.symbol],"Unknown icon symbol: "..tostring(p.symbol))
+		local lines={}
+		for index,line in paths[p.symbol] do
+			local dx,dy=(line[3]-line[1])*size/20,(line[4]-line[2])*size/20
+			lines[index]=h(Primitives.Frame,{style={width=math.sqrt(dx*dx+dy*dy),height=1.4,radius=1,
+				position=UDim2.fromOffset((line[1]+line[3])*size/40,(line[2]+line[4])*size/40),anchor=Vector2.new(0.5,0.5),rotation=math.deg(math.atan2(dy,dx)),
+				background=p.color or "$muted",backgroundTransparency=0}})
+		end
+		return h(Primitives.Frame,{name=p.name,style=Style.merge({width=size,height=size},p.style)},lines)
+	end
 	if p.image then
 		local image = if type(p.image) == "number" then "rbxassetid://" .. p.image else p.image
 		return h("@ImageLabel",hostProps(p,{width=size,height=size,backgroundTransparency=1,imageColor="$text"},{Image=image,ScaleType=Enum.ScaleType.Fit}))
@@ -60,7 +79,7 @@ function Primitives.Button(p)
 	local effects=theme.effects
 	local primary=p.variant=="primary"
 	local glow=effects.glow*effects.intensity
-	local interactive={scale=1,borderWidth=1,borderTransparency=if primary then 0.6 else 0.2,
+	local interactive={scale=1,borderWidth=if p.variant=="ghost" then 0 else 1,borderTransparency=if primary then 0.6 else 0.2,
 		hover={scale=effects.hoverScale,borderColor="$accent",borderTransparency=0.1},
 		pressed={scale=effects.pressScale},focus={borderColor="$accent",borderWidth=2,borderTransparency=0},
 		disabled={scale=1,glow=if primary and glow>0 then 0 else nil}}

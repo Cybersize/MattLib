@@ -2,12 +2,13 @@
 local Scope = require(script.Parent.Parent.utils.Scope)
 local Signal = require(script.Parent.Parent.core.Signal)
 local Diagnostics = require(script.Parent.Parent.utils.Diagnostics)
+local Wallpapers = require(script.Parent.Wallpapers)
 local Adapter = {}
 Adapter.__index = Adapter
 function Adapter.capabilities(overrides)
 	local environment = getfenv(0)
 	local result = {}
-	for _, name in { "gethui", "readfile", "writefile", "isfile", "makefolder", "isfolder" } do
+	for _, name in { "gethui", "readfile", "writefile", "isfile", "makefolder", "isfolder", "getcustomasset", "getsynasset", "httpget", "request", "http_request" } do
 		local value = if overrides then overrides[name] else environment[name]
 		if type(value) == "function" then result[name] = value end
 	end
@@ -51,6 +52,8 @@ function Adapter.new(options, onDestroy)
 		end
 	end
 	local self = setmetatable({scope=Scope.new(), services=services, capabilities=capabilities, parentMode=mode, alive=true}, Adapter)
+	self.wallpaper=Wallpapers.new(options,capabilities)
+	self.scope:Add(function() self.wallpaper:Destroy() end)
 	self.screen = make(self, "ScreenGui", name, parent)
 	self.screen.ResetOnSpawn, self.screen.ZIndexBehavior = false, Enum.ZIndexBehavior.Sibling
 	self.screen.DisplayOrder = options.displayOrder or 50

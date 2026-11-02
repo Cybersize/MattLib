@@ -1,4 +1,4 @@
-"""Create a one-file native Roblox gallery preview; no secondary downloads required."""
+"""Create a one-file native Roblox gallery; optional wallpaper imagery is not source code."""
 from __future__ import annotations
 import argparse
 import hashlib
@@ -15,7 +15,8 @@ def preview():
         'local runGallery=(function()\n'+gallery+'\nend)()\n'
         'return runGallery(MattLib)\n')
     metadata={'bundle_sha256':manifest['bundle_sha256'],'preview_sha256':hashlib.sha256(source.encode()).hexdigest(),
-        'bytes':len(source.encode()),'entrypoint':'Preview.lua','network_requests_inside_preview':0}
+        'bytes':len(source.encode()),'entrypoint':'Preview.lua','required_code_downloads_inside_preview':0,
+        'optional_wallpaper_requests_on_cache_miss':1}
     return source,metadata
 
 def main():
@@ -33,6 +34,6 @@ def main():
     else:
         target.write_text(source,encoding='utf-8',newline='\n')
         metadata_path.write_text(metadata_text,encoding='utf-8',newline='\n')
-        print(f'Built Preview.lua: {metadata["bytes"]:,} bytes; no internal network requests')
+        print(f'Built Preview.lua: {metadata["bytes"]:,} bytes; all code embedded; optional cached wallpaper PNG')
 
 if __name__=='__main__': main()

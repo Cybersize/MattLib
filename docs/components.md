@@ -13,6 +13,7 @@ Interactive inputs accept `disabled`, `value`, `defaultValue`, `onChange(value)`
 | `Frame`, `Container` | Transparent native Frame; full width and automatic height by default. Native host/ref/props supported. No automatic child layout. |
 | `Column` | Frame with vertical UIListLayout, full width, automatic height, spacing.sm gap. Accepts native host/ref/props. |
 | `Row` | Frame with horizontal UIListLayout, center cross alignment, full width, automatic height. Use fixed/UDim child widths or `distribute="fill"`. Native host/ref/props supported. |
+| `AdaptiveGrid` | Responsive wrapping section layout. `columns=2` is a maximum; `minColumnWidth=240`, `gap=12`. Measures its container and changes cell widths without reparenting keyed children. Use an outer Inset for padding. |
 | `Stack` | Same primitive as Frame; positioned/overlapping children. Set an explicit height when children have relative/absolute positions. |
 | `Inset` | Column with padding; `spacing` defaults to spacing.lg. Exterior spacing is expressed by a wrapper, not CSS margins. |
 | `ScrollArea` | Native ScrollingFrame, vertical AutomaticCanvasSize, thin semantic scrollbar. `style` applies to viewport; `contentStyle` applies to the inner Column. `ref` targets the ScrollingFrame. `native` can override scrolling direction/canvas behavior. |
@@ -20,11 +21,12 @@ Interactive inputs accept `disabled`, `value`, `defaultValue`, `onChange(value)`
 | `Section` | Surface, border, rounded padding and vertical content. `title?`, `description?`, `style`, children. |
 | `Collapsible`, `CollapsibleSection` | Same section behavior with an accessible disclosure button. `title`, `open?`, `defaultOpen=false`, `onOpenChange(boolean)`, `disabled`. Measures content and tweens clipped body height. Children retain state while closed. |
 | `Window` | See window properties below. Owns a draggable/resizable native CanvasGroup and header controls. Children fill its content area; put scrolling/navigation inside. |
-| `Tabs` | `items={{id,title,content,disabled?},...}` or direct `Tab` children. `value?`, `defaultValue?`, `onChange(id)`, `orientation="top"|"sidebar"`, `sidebarWidth=168`, `tabWidth=120`, `padding=16`, `unmountInactive=false`. Sidebar becomes top navigation below 600 safe-area pixels. Panels scroll. |
+| `Tabs` | `items={{id,title,content,disabled?,icon?},...}` or direct `Tab` children. `value?`, `defaultValue?`, `onChange(id)`, `orientation="design"|"top"|"sidebar"`, optional sidebarWidth/tabWidth/padding, `unmountInactive=false`. Sidebar follows the actual container width and becomes top navigation below 640px. Panels scroll. Icon names use the built-in line symbols. |
 | `Tab` | Metadata consumed by its direct Tabs/Sidebar parent: `id`, `title`, `disabled`, children. Rendering it outside Tabs is an error. |
 | `Sidebar` | Tabs with sidebar orientation. Same selection and item/child properties. |
 | `DesignPicker` | Selects MintGlass/Ember/Vector/Aura. Default dropdown or `presentation="segments"`; name, label, value, onChange, disabled, style. Without onChange it calls the owning application's SetDesign. |
 | `Reveal` | Native CanvasGroup entrance with opacity/scale. order=0, delay?, replayKey?, name/style; skips delayed motion when reduced motion is enabled. |
+| `Wallpaper` | Full-size animated artwork; optional `image`, `speed=1` (>0, <=4), `opacity=1` (0..1), `motion=false`, `active=false`, name/style. Uses a cached atlas when available, otherwise native ribbons/grid. Pauses while hidden or reduced motion is enabled. Set an explicit height in flow layouts. See [designs.md](designs.md). |
 
 Inactive panels remain mounted and preserve local state. Set `unmountInactive=true` for expensive pages that should release resources when inactive. Disabled tabs cannot be activated through their buttons; the application should choose an enabled default/controlled value. An unavailable selected id falls back to the first item visually.
 
@@ -51,6 +53,7 @@ UI.h("Tabs", { defaultValue = "settings" }, {
 | `defaultVisible` | true. Show/Hide are window-handle operations. Hidden windows get a scrollable restore tray for touch users. |
 | `theme` | Optional `"Dark"`, `"Light"`, custom token table, or Theme service. Omitted inherits the application's live theme. |
 | `design` | Optional MintGlass, Ember, Vector or Aura scoped override. Omitted follows the application. See [designs.md](designs.md). |
+| `wallpaper` | Defaults to animated design artwork. `false` removes it. Table options: `Image?`, `Speed=1`, `Opacity=1`, `Motion=false` for a static image/artwork. |
 | `windowRef` | Table receiving the managed window handle in `.current`, later nil. This differs from a native host ref. |
 | `onReady(handle)` | Called after native refs are committed and the manager registers the window. |
 | `onMove(rect)` / `onResize(rect)` | Called on successful pointer gesture completion. Rect has x,y,width,height. |

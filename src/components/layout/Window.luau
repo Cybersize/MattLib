@@ -64,15 +64,15 @@ local function WindowBase(p)
 	end,{present,visible,closed,theme.design.name})
 	if not present then return nil end
 	local glow=theme.effects.glow*theme.effects.intensity
-	local ambient=theme.effects.ambient*theme.effects.intensity
+	local wallpaper=if type(p.wallpaper)=="table" then p.wallpaper else {}
 	local chromeStyle=Style.merge({width="100%",height="100%",background="$background",backgroundTransparency=0,
 		borderWidth=1,borderColor="$border",radius="$radius.lg",overflow="hidden",position=UDim2.fromScale(0.5,0.5),anchor=Vector2.new(0.5,0.5)},p.style)
 	return h("@Frame",{ref=frame,name=p.name or "Window:"..id,role="window",accessibleName=p.title or "Application",native={Active=true},
 		attributes={MattDesign=theme.design.name},style={width=(p.size or {760,540})[1],height=(p.size or {760,540})[2],visible=visible,
 			backgroundTransparency=1,radius="$radius.lg",glow=if glow>0 then (if closed then 0 else glow*0.5) else nil}}, {
 		h("@CanvasGroup",{ref=chrome,name="WindowChrome",motion=false,style=chromeStyle}, {
-			h("Frame",{name="WindowAtmosphere",style={width="100%",height="100%",background="$accent",backgroundTransparency=1-ambient,
-				gradient={from="$accent",to="$background",rotation=if theme.design.name=="Aura" then 135 else 45,transparency={0.7,1}},zIndex=0}}),
+			p.wallpaper~=false and h("Wallpaper",{name="WindowAtmosphere",active=visible and not minimized and not closed,
+				image=wallpaper.Image or wallpaper.image,speed=wallpaper.Speed or wallpaper.speed,opacity=wallpaper.Opacity or wallpaper.opacity,motion=wallpaper.Motion}) or false,
 			h("Frame",{ref=title,name="WindowTitlebar",native={Active=true,Selectable=true},accessibleName="Move window with arrow keys",
 				style={width="100%",height=header,background="$chrome",backgroundTransparency=0.05,zIndex=2}}, {
 				h("Text",{text="M",style={position=UDim2.fromOffset(14,0),width=24,height=header,font="$typography.bold",textSize=22,color="$accent",textAlign="center"}}),

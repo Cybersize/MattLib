@@ -58,29 +58,37 @@ return function(Library,options)
 		local enabled,setEnabled=bind("enabled"); local checked,setChecked=bind("checked"); local volume,setVolume=bind("volume"); local range,setRange=bind("range")
 		local name,setName=bind("name"); local number,setNumber=bind("number"); local region,setRegion=bind("region"); local tags,setTags=bind("tags")
 		local color,setColor=bind("color"); local key,setKey=bind("key"); local radio,setRadio=bind("radio"); local segment,setSegment=bind("segment")
-		return h("Column",{style={gap=16}}, {
+		return h("Column",{style={gap=12}}, {
 			h("Text",{text="Inputs & controls",style={textSize=24,font="$typography.bold"}}),
-			h("Section",{title="Boolean controls"}, {
-				h("Toggle",{name="GalleryToggle",label="Enable notifications",description="A controlled switch backed by a shared signal.",value=enabled,onChange=setEnabled}),
-				h("Checkbox",{label="Include experimental features",value=checked,onChange=setChecked}),
+			h("AdaptiveGrid",{name="GalleryControlsGrid",minColumnWidth=230,gap=12}, {
+			h("Section",{key="boolean",title="Boolean controls"}, {
+				h("Toggle",{name="GalleryToggle",label="Notifications",description="Share state across controls.",value=enabled,onChange=setEnabled}),
+				h("Separator",{style={backgroundTransparency=0.45}}),
+				h("Checkbox",{label="Experimental features",value=checked,onChange=setChecked}),
 				h("Toggle",{label="Unavailable setting",disabled=true,value=false}),
 			}),
-			h("Section",{title="Continuous values"}, {
+			h("Section",{key="continuous",title="Continuous values",revealOrder=1}, {
 				h("Slider",{label="Output level",min=0,max=100,value=volume,onChange=setVolume,format=function(n) return n.."%" end}),
 				h("RangeSlider",{label="Operating range",min=0,max=100,value=range,onChange=setRange}),
+				h("StatusIndicator",{text="Live values",status="success"}),
 			}),
-			h("Section",{title="Text & selection"}, {
+			h("Section",{key="text",title="Workspace",revealOrder=2}, {
 				h("TextInput",{label="Workspace name",value=name,onChange=setName,maxLength=48}),
 				h("NumericInput",{label="Concurrency",min=1,max=32,step=1,value=number,onChange=setNumber}),
+				h("SegmentedControl",{label="Time period",options={"Daily","Weekly","Monthly"},value=segment,onChange=setSegment}),
+			}),
+			h("Section",{key="selection",title="Selection",revealOrder=3}, {
 				h("Dropdown",{label="Region",options={"Singapore","Tokyo","Frankfurt","Virginia"},value=region,onChange=setRegion}),
 				h("SearchableDropdown",{label="Search regions",options={"Singapore","Tokyo","Frankfurt","Virginia","Sydney","London","Mumbai"},value=region,onChange=setRegion}),
 				h("MultiSelect",{label="Project tags",options={"Design","Luau","Research","Testing","Release"},value=tags,onChange=setTags}),
 			}),
-			h("Section",{title="Specialized controls"}, {
+			h("Section",{key="special",title="Personalization",revealOrder=4}, {
 				h("ColorPicker",{label="Highlight color",value=color,onChange=setColor}),
 				h("Keybind",{label="Quick action",value=key,onChange=setKey,onTrigger=function() app:Notify({title="Keybind",message="Your configured keyboard shortcut fired."}) end}),
+			}),
+			h("Section",{key="profile",title="Performance",revealOrder=5}, {
 				h("RadioGroup",{label="Performance profile",options={"Economy","Balanced","Performance"},value=radio,onChange=setRadio}),
-				h("SegmentedControl",{label="Time period",options={"Daily","Weekly","Monthly"},value=segment,onChange=setSegment}),
+			}),
 			}),
 		})
 	end
@@ -107,7 +115,7 @@ return function(Library,options)
 		return h("Column",{style={gap=16}}, {
 			h("Text",{text="Feedback & overlays",style={textSize=24,font="$typography.bold"}}),
 			h("Section",{title="Status and progress"}, {
-				h("Row",{}, {h("StatusIndicator",{status="success",text="Operational"}),h("StatusIndicator",{status="warning",text="Attention"}),h("Badge",{text="v1.1"})}),
+				h("Row",{}, {h("StatusIndicator",{status="success",text="Operational"}),h("StatusIndicator",{status="warning",text="Attention"}),h("Badge",{text="v1.2"})}),
 				h("ProgressBar",{label="Release preparation",value=progress}),
 				h("Slider",{label="Preview progress",min=0,max=100,value=math.round(progress*100),onChange=function(n) setProgress(n/100) end}),
 				h("LoadingIndicator",{text="Waiting for your next idea…"}),
@@ -166,52 +174,68 @@ return function(Library,options)
 			local connection=stageRef.current:GetPropertyChangedSignal("AbsoluteSize"):Connect(measure); measure()
 			return function() connection:Disconnect() end
 		end,{})
-		local split=width>=650
-		local small=width<480
-		return h("Column",{ref=stageRef,style={gap=18}}, {
-			h("Text",{text="MATTLIB  /  DESIGN STUDIO",style={textSize=11,font=Enum.Font.Code,color="$accent"}}),
-			h("Text",{text=headings[design],style={textSize=if design=="Vector" then 25 else 31,font="$typography.bold"}}),
-			h("Paragraph",{text=descriptions[design]}),
-			h("DesignPicker",{name="GalleryDesignPicker",presentation=if small then "dropdown" else "segments",label="Choose your design",value=design,onChange=setDesign}),
-			h("Frame",{style={width="100%",height="auto",direction=if split then "row" else "column",gap=16,verticalAlign="start"}}, {
-				h("Section",{name="DesignEffects",title="Feel & motion",style={width=if split then UDim.new(0.62,-8) else "100%"}}, {
-					h("Toggle",{label="Smooth transitions",description="Window reveals, moving tab indicators and hover feedback.",value=not reduced,onChange=function(value) setReduced(not value) end}),
-					h("Toggle",{label="Ambient effects",description="Accent halos and subtle window lighting.",value=intensity>0,onChange=function(value) setIntensity(if value then 1 else 0) end}),
-					h("Slider",{name="DesignIntensity",label="Effect intensity",value=math.round(intensity*100),min=0,max=100,onChange=function(value) setIntensity(value/100) end,format=function(value) return value.."%" end}),
-					h("Separator"),
-					h("Text",{text="Interaction preview",style={font="$typography.medium"}}),
-					h("Button",{name="DesignTryButton",text="Try interaction",variant="primary",onClick=function()
-						app:Notify({title=theme.design.label,message="Hover, press, switch tabs and explore the controls.",status="success"})
-					end}),
-					h("Row",{style={distribute="fill"}}, {
-						h("Button",{text="Show dialog",onClick=function() app:Confirm({title="A focused moment",message="This dialog shares the selected design.",onResult=function() end}) end}),
-						h("Button",{text="Test notification",onClick=function() app:Notify({title="Theme ready",message="The entire application uses "..theme.design.label..".",status="success"}) end}),
-					}),
+		local color,setColor=bind("color")
+		local surface=if theme.background.R+theme.background.G+theme.background.B>1.5 then "Light" else "Dark"
+		local profileTheme=UI.useMemo(function()
+			return UI.mergeStyles(theme,if design=="Ember" then {text=theme.profileText,muted=theme.profileMuted,
+				input=Color3.fromRGB(242,234,219),raised=Color3.fromRGB(231,221,204),border=Color3.fromRGB(199,187,168),
+				hover=Color3.fromRGB(224,212,193),pressed=Color3.fromRGB(214,199,177)} else {})
+		end,{theme,design})
+		local split=width>=500
+		local small=width<400
+		local function showNotification() app:Notify({title="Appearance updated",message=theme.design.label.." is ready.",status="success"}) end
+		return h("Column",{ref=stageRef,style={gap=12}}, {
+			h("Text",{text="APPEARANCE  /  "..string.upper(theme.design.label),style={textSize=10,font=Enum.Font.Code,color="$accent"}}),
+			h("Text",{text=headings[design],style={textSize=if small then 25 elseif design=="Vector" then 28 else 34,font="$typography.bold"}}),
+			h("Paragraph",{text=descriptions[design],style={textSize=15}}),
+			h("DesignPicker",{name="GalleryDesignPicker",presentation=if small then "dropdown" else "segments",value=design,onChange=setDesign}),
+			h("Frame",{style={width="100%",height="auto",direction=if split then "row" else "column",gap=12,verticalAlign="start"}}, {
+				h("Section",{name="DesignEffects",title="Visual effects",style={width=if split then UDim.new(0.55,-6) else "100%",padding=14,gap=6}}, {
+					h("Separator",{style={backgroundTransparency=0.35}}),
+					h("Toggle",{label="Interface motion",description="Animated reveals & feedback.",value=not reduced,onChange=function(value) setReduced(not value) end}),
+					h("Separator",{style={backgroundTransparency=0.6}}),
+					h("Toggle",{label="Live wallpaper",description="Ribbons, light & moving layers.",value=intensity>0,onChange=function(value) setIntensity(if value then 1 else 0) end}),
+					h("Separator",{style={backgroundTransparency=0.6}}),
 					h("Toggle",{label="Reduced motion",value=reduced,onChange=setReduced}),
+					h("Separator",{style={backgroundTransparency=0.35}}),
+					h("Slider",{name="DesignIntensity",label="Effect intensity",value=math.round(intensity*100),min=0,max=100,onChange=function(value) setIntensity(value/100) end,format=function(value) return value.."%" end,style={paddingX=0}}),
 				}),
-				h("Section",{name="CurrentDesign",revealOrder=1,style={width=if split then UDim.new(0.38,-8) else "100%",background="$profile",backgroundTransparency=0}}, {
-					h("Text",{text="CURRENT DESIGN",style={font=Enum.Font.Code,textSize=11,color="$profileMuted"}}),
-					h("Text",{text=theme.design.label,style={font="$typography.bold",textSize=28,color="$profileText"}}),
-					h("Text",{text="M",style={font="$typography.bold",textSize=68,height=80,color="$accent"}}),
-					h("Paragraph",{text=app:GetDesigns()[table.find(app.Designs,design)].description,style={color="$profileMuted",textSize=13}}),
-					h("Separator"),
-					h("Text",{text="CORNERS   "..theme.radius.md.." px\nCONTROLS  "..theme.controlHeight.." px\nREVEAL    "..math.round(theme.motion.reveal*1000).." ms",style={font=Enum.Font.Code,textSize=12,color="$profileText"}}),
-					h("Button",{name="DesignApply",text="Save appearance",variant="primary",onClick=function()
+				h("ThemeProvider",{theme=profileTheme},h("Section",{name="CurrentDesign",title=if design=="Ember" then "Your profile" else "Accent & surface",revealOrder=1,
+				style={width=if split then UDim.new(0.45,-6) else "100%",background=if design=="Ember" then "$profile" else "$surface",backgroundTransparency=if design=="Ember" then 0 else 0.24,padding=14,gap=10}}, {
+					h("Frame",{name="WallpaperPreview",style={height=112,background="$background",backgroundTransparency=0,radius="$radius.md",borderWidth=1,borderColor="$border",overflow="hidden"}}, {
+						h("Wallpaper",{opacity=1}),
+						h("Frame",{style={width="56%",height=86,position=UDim2.fromOffset(12,13),background="$raised",backgroundTransparency=0.18,radius="$radius.md",borderWidth=1,borderColor="$border"}}, {
+							h("Text",{text="M",style={width=34,height=40,position=UDim2.fromOffset(12,8),textSize=32,font="$typography.bold",color="$accent"}}),
+							h("Frame",{style={width="40%",height=6,position=UDim2.new(0,50,0,20),background="$muted",backgroundTransparency=0.55,radius=3}}),
+							h("Frame",{style={width="28%",height=5,position=UDim2.new(0,50,0,33),background="$muted",backgroundTransparency=0.75,radius=3}}),
+							h("Frame",{style={width="60%",height=16,position=UDim2.fromOffset(12,56),background="$accent",backgroundTransparency=0,radius=4}}),
+						}),
+					}),
+					h("ColorPicker",{label="Highlight color",value=color,onChange=setColor}),
+					h("Dropdown",{label="Surface",options={"Dark","Light"},value=surface,onChange=function(value) app:SetTheme(value); app:SetEffectIntensity(intensity) end}),
+					h("Text",{text=theme.design.label.."  /  "..math.round(theme.motion.reveal*1000).." ms reveal",style={font=Enum.Font.Code,textSize=10,color=if design=="Ember" then "$profileMuted" else "$muted"}}),
+				})),
+			}),
+			h("Section",{title="Preview",revealOrder=2,style={padding=14,gap=10}}, {
+				h("StatusIndicator",{text="Live workspace",status="success"}),
+				h("Row",{style={distribute="fill",gap=10,wrap=true}}, {
+					h("Button",{name="DesignApply",text="Apply appearance  ›",variant="primary",style={width=if small then "100%" else UDim.new(0.55,-5)},onClick=function()
 						local ok,result=app.Config:Save("default")
-						app:Notify({title=if ok then "Appearance saved" else "Save failed",message=tostring(result),status=if ok then "success" else "error"})
+						app:Notify({title=if ok then "Appearance updated" else "Save failed",message=if ok then "Your appearance is saved." else tostring(result),status=if ok then "success" else "error"})
 					end}),
+					h("Button",{name="DesignTryButton",text="Test interaction",style={width=if small then "100%" else UDim.new(0.45,-5)},onClick=showNotification}),
 				}),
 			}),
-			h("Section",{title="For scripters",revealOrder=2}, {
-				h("Text",{text='local window = MattLib:CreateWindow({\n    Title = "My UI",\n    Design = "'..design..'",\n})\nwindow:SetDesign("Aura")',style={font=Enum.Font.Code,textSize=12,color="$muted"}}),
+			h("CollapsibleSection",{title="For scripters",defaultOpen=false,style={padding=12}}, {
+				h("Text",{text='local window = MattLib:CreateWindow({\n    Title = "My UI", Design = "'..design..'",\n})\nlocal tab = window:AddTab({Title = "Main", Columns = 2})',style={font=Enum.Font.Code,textSize=12,color="$muted"}}),
 			}),
 		})
 	end
 
 	local function App()
-		return h("Window",{id="gallery",title="MattLib  /  Component Studio",size={1060,730},minSize=Vector2.new(300,260),openKey="RightShift"},
-			h("Tabs",{orientation="design",defaultValue="designs",items={{id="designs",title="Designs",content=h(DesignLab)},{id="overview",title="Overview",content=h(Overview)},{id="inputs",title="Inputs & controls",content=h(Inputs)},
-				{id="layout",title="Layout",content=h(Layouts)},{id="feedback",title="Feedback",content=h(FeedbackPanel)},{id="config",title="Configs",content=h(Configurations)}}}))
+		return h("Window",{id="gallery",title="MattLib  /  Component Studio",size={1060,700},minSize=Vector2.new(300,260),openKey="RightShift"},
+			h("Tabs",{orientation="design",defaultValue=options.page or "designs",items={{id="designs",title="Appearance",icon="appearance",content=h(DesignLab)},{id="overview",title="Overview",icon="home",content=h(Overview)},{id="inputs",title="Controls",icon="controls",content=h(Inputs)},
+				{id="layout",title="Layout",icon="layout",content=h(Layouts)},{id="feedback",title="Feedback",icon="activity",content=h(FeedbackPanel)},{id="config",title="Configs",icon="settings",content=h(Configurations)}}}))
 	end
 	local root=UI.mount(h(App))
 	return {library=app,root=root,Destroy=function() for _,disconnect in disconnects do disconnect() end; app:Destroy(); for _,signal in settings do signal:Destroy() end end}

@@ -19,6 +19,8 @@ local Primitives=require(script.components.primitives.Primitives)
 local Sections=require(script.components.layout.Sections)
 local OverlayComponents=require(script.components.layout.Overlays)
 local Windows=require(script.components.layout.Window)
+local AdaptiveGrid=require(script.components.layout.AdaptiveGrid)
+local Wallpaper=require(script.components.layout.Wallpaper)
 local Tabs=require(script.components.navigation.Tabs)
 local DesignPicker=require(script.components.navigation.DesignPicker)
 local Boolean=require(script.components.inputs.Boolean)
@@ -31,7 +33,7 @@ local Keybind=require(script.components.inputs.Keybind)
 local Feedback=require(script.components.feedback.Feedback)
 local Facade=require(script.menu.Facade)
 Primitives.register()
-for _,group in {Sections,OverlayComponents,Windows,Tabs,DesignPicker,Boolean,TextInputs,Dropdowns,Selection,ColorPicker,Keybind,Feedback} do
+for _,group in {Sections,OverlayComponents,Windows,AdaptiveGrid,Wallpaper,Tabs,DesignPicker,Boolean,TextInputs,Dropdowns,Selection,ColorPicker,Keybind,Feedback} do
 	for name,component in group do Element.register(name,component) end
 end
 Element.register("Slider",Sliders.Slider); Element.register("RangeSlider",Sliders.RangeSlider)
@@ -40,7 +42,7 @@ local Library={}
 Library.__index=Library
 function Library.new(options)
 	options=options or {}
-	local self=setmetatable({Version="1.1.0",options=options,_roots={},_scope=Scope.new(),_destroyed=false,Designs=Designs.Names},Library)
+	local self=setmetatable({Version="1.2.0",options=options,_roots={},_scope=Scope.new(),_destroyed=false,Designs=Designs.Names},Library)
 	self.Theme=Theme.new(Designs.resolve(options.design or "MintGlass",options.theme))
 	self.Config=Config.new(game:GetService("HttpService"),Adapter.capabilities(options.capabilities),options.config)
 	self.UI={h=Element.h,Fragment=Element.Fragment,portal=Element.portal,list=Element.list,signal=Signal.new,derived=Signal.derived,batch=Signal.batch,
@@ -116,7 +118,9 @@ function Library:GetDiagnostics() return Diagnostics.snapshot() end
 function Library:GetRuntimeInfo()
 	local capabilities={}
 	for name in Adapter.capabilities(self.options.capabilities) do capabilities[name]=true end
-	return {capabilities=capabilities,parentMode=self._env and self._env.runtime.parentMode or "uninitialized",version=self.Version}
+	local wallpaper=self._env and self._env.runtime.wallpaper
+	return {capabilities=capabilities,parentMode=self._env and self._env.runtime.parentMode or "uninitialized",version=self.Version,
+		wallpaper=if wallpaper then wallpaper.mode else "uninitialized",wallpaperError=wallpaper and wallpaper.error}
 end
 function Library:Destroy()
 	if self._destroyed then return end

@@ -15,7 +15,8 @@ local function control(p,kind)
 	local inset=(height-thumb)/2
 	return h("Button",{name=p.name,ref=p.ref,text="",disabled=p.disabled,variant="ghost",onClick=function() setValue(not value) end,
 		role=kind,accessibleName=p.accessibleName or p.label or kind,accessibleValue=tostring(value),
-		style=Style.merge({height=if p.description then controls.rowHeight+18 else controls.rowHeight,paddingX=8,scale=1,hover={scale=1},pressed={scale=1}},p.style)}, {
+		style=Style.merge({height=if p.description then controls.rowHeight+14 else controls.rowHeight,paddingX=0,scale=1,radius=0,
+			borderWidth=0,hover={scale=1,backgroundTransparency=0.8},pressed={scale=1},disabled={backgroundTransparency=1}},p.style)}, {
 		h("Column",{style={width=UDim.new(1,-64),height="auto",position=UDim2.new(0,0,0.5,0),anchor=Vector2.new(0,0.5),gap=2}}, {
 			h("Text",{text=p.label or (if checkbox then "Checkbox" else "Toggle"),style={color=if p.disabled then "$disabled" else "$text"}}),
 			p.description and h("Paragraph",{text=p.description,style={textSize=12}}) or false,
