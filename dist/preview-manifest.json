@@ -1,9 +1,9 @@
 {
-  "bundle_sha256": "d3c0a70f5c53fe09b19d7dfad9bfba9756db39de33a1fea67946122f52d9a721",
-  "bytes": 210071,
+  "bundle_sha256": "4b1684646ad5fd6c883100ee53a5270329ba6d9b07f0a0d2424a93e36cf28593",
+  "bytes": 213018,
   "entrypoint": "Preview.lua",
   "optional_wallpaper_requests_per_design_on_cache_miss": 1,
-  "preview_sha256": "16a708990b445f3e088c08ab31d6fa75579a70fb5d4e92f2b82302e7547276cf",
+  "preview_sha256": "a777cfc0a5cec014e79cb5c25e2592cd5b3a1f319f6a07d6769d0d13226e8e88",
   "required_code_downloads_inside_preview": 0,
   "wallpaper_designs": 4
 }

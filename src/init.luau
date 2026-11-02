@@ -42,7 +42,8 @@ local Library={}
 Library.__index=Library
 function Library.new(options)
 	options=options or {}
-	local self=setmetatable({Version="1.2.1",options=options,_roots={},_scope=Scope.new(),_destroyed=false,Designs=Designs.Names},Library)
+	assert(options.mobileToggle==nil or type(options.mobileToggle)=="boolean","mobileToggle must be true, false, or omitted")
+	local self=setmetatable({Version="1.2.2",options=options,_roots={},_scope=Scope.new(),_destroyed=false,Designs=Designs.Names},Library)
 	self.Theme=Theme.new(Designs.resolve(options.design or "MintGlass",options.theme))
 	self.Config=Config.new(game:GetService("HttpService"),Adapter.capabilities(options.capabilities),options.config)
 	self.UI={h=Element.h,Fragment=Element.Fragment,portal=Element.portal,list=Element.list,signal=Signal.new,derived=Signal.derived,batch=Signal.batch,

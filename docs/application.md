@@ -41,7 +41,24 @@ print(windowRef.current:GetRect().width)
 root:Unmount()
 ```
 
-Each window has independent geometry/visibility/minimize state. The titlebar handles mouse/touch movement, the lower-right grip handles resize, and selected titlebar/grip arrow keys provide keyboard alternatives. Fixed-size windows omit resizing. Manager gestures use current native safe-area bounds and direct instance geometry updates, avoiding a functional-tree render per pointer movement. Header minimize retains a 44px titlebar; resizing while minimized changes the later restore size. Show/Hide can be bound to a KeyCode or disabled. A shared scrollable restore tray keeps hidden windows recoverable without a keyboard. ScreenGui uses CoreUISafeInsets where available and standard IgnoreGuiInset=false as an older-client fallback.
+Each window has independent geometry/visibility/minimize state. The titlebar handles mouse/touch movement, the lower-right grip handles resize, and selected titlebar/grip arrow keys provide keyboard alternatives. Fixed-size windows omit resizing. Manager gestures use current native safe-area bounds and direct instance geometry updates, avoiding a functional-tree render per pointer movement. Header minimize uses the selected design's titlebar height; resizing while minimized changes the later restore size. Show/Hide can be bound to a KeyCode or disabled. Touch devices automatically get a persistent floating M toggle. A shared restore tray keeps windows without an icon recoverable without a keyboard. ScreenGui uses CoreUISafeInsets where available and standard IgnoreGuiInset=false as an older-client fallback.
+
+## Mobile toggle
+
+On touch devices, each window automatically gets a 48x48 floating **M** button along the right edge of the safe area. Tap it to hide the window; tap again to show it. The icon is a sibling of the managed window, so hiding that window leaves the icon visible. Multiple icons form a scrollable stack. They are removed when their windows close or the application is destroyed.
+
+```lua
+local window=MattLib:CreateWindow({
+    Title="My UI",
+    -- MobileToggle omitted: automatic on touch devices
+    MobileToggle=true, -- also show it on desktop; false disables it
+})
+window:Update({MobileToggle=false}) -- can be changed at runtime
+```
+
+Declarative windows accept `mobileToggle=true` or `false`. `MattLib.new({mobileToggle=false})` disables automatic launchers application-wide; a window can override that with `MobileToggle=true`. Omitting the setting uses [UserInputService.TouchEnabled](https://create.roblox.com/docs/reference/engine/classes/UserInputService#TouchEnabled), and taps use the shared button's cross-platform [Activated event](https://create.roblox.com/docs/reference/engine/classes/GuiButton#Activated).
+
+Hiding keeps the existing controls and state. Reopening a hidden minimized window restores its full height. Hiding with the M button releases focus from text inputs in that window, allowing the virtual keyboard to dismiss. A modal dialog owns interaction until dismissed; the icon does not toggle a window behind an active modal. Windows with a launcher do not also appear in the restore tray. Desktop keyboard shortcuts remain available.
 
 Closing a declarative window fades/removes its native content, while its owning root remains a handle. Unmount that root/application when finished. A conditional parent may remove the Window immediately in onClose; that intentionally skips the internal exit transition. Do not retain/use native instances after unmount.
 

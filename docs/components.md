@@ -50,7 +50,8 @@ UI.h("Tabs", { defaultValue = "settings" }, {
 | `minSize` / `maxSize` | Optional Vector2 constraints; default minimum 280×180. Small screens take precedence over minimums. |
 | `fixedSize` | false; disables pointer/keyboard resize controls. Programmatic SetSize remains available. |
 | `openKey` | `"RightShift"`, a KeyCode name/EnumItem, or false to disable. Pauses while typing or an overlay is open. |
-| `defaultVisible` | true. Show/Hide are window-handle operations. Hidden windows get a scrollable restore tray for touch users. |
+| `mobileToggle` | Omitted: automatic on touch devices. `true`: always show a floating M icon, including desktop. `false`: use the restore tray instead. The icon toggles only its window and stays mounted while that window is hidden. Facade option: `MobileToggle`. |
+| `defaultVisible` | true. Show/Hide are window-handle operations. Touch windows keep their floating M icon even when starting hidden; other hidden windows appear in the restore tray. |
 | `theme` | Optional `"Dark"`, `"Light"`, custom token table, or Theme service. Omitted inherits the application's live theme. |
 | `design` | Optional MintGlass, Ember, Vector or Aura scoped override. Omitted follows the application. See [designs.md](designs.md). |
 | `wallpaper` | Defaults to quiet animated design artwork. `false` removes it. Table options: `Image?`, `Speed=1`, `Opacity=0..1` (default depends on design), `Motion=false` for static artwork. |

@@ -1,14 +1,15 @@
-# MattLib 1.2.1 verification
+# MattLib 1.2.2 verification
 
-The current runtime and self-contained preview contain MintGlass, Ember, Vector and Aura, native animated wallpapers, optional textured wallpapers and responsive control columns. Results below identify executed checks separately from remaining visual/device testing.
+The current runtime and self-contained preview contain MintGlass, Ember, Vector and Aura, native animated wallpapers, optional textured wallpapers, responsive control columns and persistent mobile launchers. Current CLI/build checks are listed separately from earlier native Studio evidence. Version 1.2.2 has not been run on a physical phone or in a fresh native Studio session.
 
 | Check | Result | Evidence and limits |
 | --- | --- | --- |
 | Luau compilation | **53 files compiled** with official Luau 0.744 | Source, five example factories, loaders, Studio scripts, distribution aliases, Preview.lua and generated runners. Compilation is not a strict Roblox typecheck. |
-| Runtime regression suite | **89 passed, 0 failed** | [tests/results.json](../tests/results.json). Actual bundle against a limited engine double, including all four designs, direct native fades, non-rasterized text, adaptive layout, wallpaper lifetime/caching/failure fixtures and all five examples. |
+| Runtime regression suite | **96 passed, 0 failed** | [tests/results.json](../tests/results.json). Actual 1.2.2 bundle against a limited engine double, including all four designs, mobile toggle activation/state/cleanup, direct native fades, adaptive layout, wallpaper fixtures and all examples. |
 | Build/distribution suite | **11 passed** | [tests/build-results.json](../tests/build-results.json). Graph/cache validation, deterministic output, rejected imports, matching aliases, preview, Studio place and full-resolution PNG dimensions/chunk checksums. |
 | Actual Preview.lua | **Passed** | [tests/preview-results.json](../tests/preview-results.json). Full live-picker gallery mounts and destroys without managed instance/listener/subscription/tween leaks in the engine double. |
-| Native Roblox Studio 1.2.1 | **26 passed, 0 failed** | [tests/studio/results.json](../tests/studio/results.json). Real Studio 0.745.0.7451137 Play client; tested bundle and gallery sources match the final distribution/preview. Camera viewport 812x675. |
+| Native Roblox Studio | **Earlier 1.2.1: 26 passed, 0 failed** | [tests/studio/results.json](../tests/studio/results.json). Historical real Studio 0.745.0.7451137 Play-client evidence, camera viewport 812x675. Its recorded bundle hash belongs to 1.2.1 and does not validate the 1.2.2 runtime. |
+| Mobile launcher 1.2.2 | **Simulated touch tests passed; native/device review pending** | Tests exercise Activated payloads, persistent icon identity through hide/show, state retention, configuration overrides, independent windows, close cleanup, keyboard focus, modal ownership and portrait/landscape bounds. Two native launcher fixtures are included for the next Studio run; they were compiled, not executed. |
 | Native designs and gallery | **All four passed** | Native runtime checked gradient/scale/glow creation and removal, layout/state identity through switches, scoped window designs and each of the four gallery factory variants. The gallery also reported ready after smoke cleanup. |
 | Native constrained mobile layout | **Passed at 360x640** | A real native-layer constraint fixture, including window bounds, top-navigation fallback and modal sizing. This is not a physical phone test. |
 | Native dense gallery layout | **Passed at 790x640** | 148px sidebar, 582px content area, two 285px cards separated by 12px. Actual engine positions establish non-overlap. See the stored layout_metrics. |
@@ -17,7 +18,7 @@ The current runtime and self-contained preview contain MintGlass, Ember, Vector 
 | Executor compatibility | **Capability fixtures only** | Optional gethui/filesystem/image-adapter success, cache hits, download failure and native fallback are covered. No live executor was used; the generated texture has not been visually checked in an executor. |
 | Visual and physical-device review | **Outstanding** | Previous Studio screenshot attempts failed with FrameArrived/window-capture channel timeouts. The current attempt was stopped with the user's physical Escape key; desktop control stopped immediately. The user's 1.2 screenshots exposed atlas bleed, excessive wallpaper strength and soft rendering. Version 1.2.1 fixes these paths and adds native structural checks; final live-executor screenshot acceptance remains separate. |
 
-Exact runtime/preview hashes are in [dist/manifest.json](../dist/manifest.json) and [dist/preview-manifest.json](../dist/preview-manifest.json). Native evidence records the matching bundle hash and UTC timestamp. Historical evidence is retained as results-v1.0.json, results-v1.1.json and [results-v1.2.0.json](../tests/studio/results-v1.2.0.json); those are not used to claim current-version validation.
+Exact current runtime/preview hashes are in [dist/manifest.json](../dist/manifest.json) and [dist/preview-manifest.json](../dist/preview-manifest.json). The latest executed native report remains versioned 1.2.1 in tests/studio/results.json. Earlier evidence is retained as results-v1.0.json, results-v1.1.json and results-v1.2.0.json. None of those native reports is used to claim native or physical-device validation of 1.2.2.
 
 ## Regression coverage
 
@@ -40,4 +41,4 @@ Version 1.2.1 replaces shared-component CanvasGroups with native Frames and per-
 - Review animation timing, rapid interruptions and reduced motion in a target client, and profile realistic long-running workloads.
 - Verify a particular standalone environment's parenting/filesystem functions before promising compatibility with it.
 
-Implementation and automated/native functional checks are complete. Remaining visual/device acceptance is explicitly unverified.
+Current automated CLI/build checks are complete. Native checks for the new launcher and physical-device acceptance remain unverified.

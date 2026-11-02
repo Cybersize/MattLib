@@ -1,6 +1,6 @@
 # Four selectable designs
 
-MattLib 1.2.1 includes **MintGlass**, **Ember**, **Vector**, and **Aura**. These presets change the palette, window chrome, navigation layout, control density, corner shapes, section treatment, wallpaper, effects and motion timing. They use the same renderer/components; changing a design retains window geometry, selected tabs, controlled values and local component state.
+MattLib 1.2.2 includes **MintGlass**, **Ember**, **Vector**, and **Aura**, plus an automatic [floating M toggle for touch devices](application.md#mobile-toggle). These presets change the palette, window chrome, navigation layout, control density, corner shapes, section treatment, wallpaper, effects and motion timing. They use the same renderer/components; changing a design retains window geometry, selected tabs, controlled values and local component state.
 
 | API name | Look and navigation | Controls / motion |
 | --- | --- | --- |

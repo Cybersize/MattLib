@@ -1,5 +1,5 @@
 -- Minimal menu using the same framework as the full gallery preview.
-local source=game:HttpGet("https://raw.githubusercontent.com/Cybersize/MattLib/main/dist/MattLib.lua?v=1.2.1")
+local source=game:HttpGet("https://raw.githubusercontent.com/Cybersize/MattLib/main/dist/MattLib.lua?v=1.2.2")
 local chunk,reason=loadstring(source,"@MattLib/MattLib.lua")
 assert(chunk,reason)
 local MattLib=chunk()

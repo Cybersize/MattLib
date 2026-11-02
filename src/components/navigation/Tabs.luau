@@ -124,7 +124,7 @@ function Tabs.Tabs(p)
 			h("Column",{name="NavigationFooter",style={height=footer,visible=side,width=UDim.new(1,-28),position=UDim2.new(0,14,1,-footer),gap=5,paddingY=10}}, {
 				h("Separator",{style={backgroundTransparency=0.5}}),
 				h("Text",{text="●  Local workspace",style={textSize=11,color="$muted"}}),
-				h("Text",{text=theme.design.label.."  /  v1.2.1",style={textSize=10,font=Enum.Font.Code,color="$subtle"}}),
+				h("Text",{text=theme.design.label.."  /  v1.2.2",style={textSize=10,font=Enum.Font.Code,color="$subtle"}}),
 			}),
 		}),
 		h("Frame",{name="TabPanels",style={width=if side then UDim.new(1,-width-8) else "100%",height=if side then "100%" else UDim.new(1,-height-inset),

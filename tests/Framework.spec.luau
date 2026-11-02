@@ -20,6 +20,7 @@ local function test(name,callback)
 		local cleanupOk,cleanupErr=pcall(function() library:Destroy() end)
 		if not cleanupOk then ok,err=false,tostring(err).."; cleanup: "..tostring(cleanupErr) end
 	end
+	Mock.services.UserInputService.TouchEnabled=false
 	table.clear(libraries)
 	local settle,settleErr=pcall(function() Mock.advance(2) end)
 	if not settle then ok,err=false,tostring(err).."; scheduler: "..tostring(settleErr) end
@@ -691,6 +692,75 @@ for _,name in {"basic","declarative","component-gallery","complex-dashboard","de
 		example.Destroy()
 	end)
 end
+
+local function mobileButton(lib,id)
+	return lib._env.runtime.screen:FindFirstChild("MobileToggle:"..id,true)
+end
+test("touch windows retain a floating icon through hide and show without losing state",function()
+	Mock.services.UserInputService.TouchEnabled=true
+	local lib=new(); local UI=lib.UI
+	local root=UI.mount(UI.h("Window",{id="phone",title="Phone"},UI.h("Toggle",{name="phone-setting",defaultValue=true}))); Mock.flush()
+	local frame,control=root:Find("Window:phone"),root:Find("phone-setting")
+	local icon=mobileButton(lib,"phone"); assert(icon); assert(not icon:IsDescendantOf(frame)); assert(icon.AbsoluteSize.X>=44 and icon.AbsoluteSize.Y>=44)
+	local baseline=lib:GetDiagnostics()
+	for _=1,10 do
+		icon.Activated:Fire(Mock.input("Touch"),1); Mock.flush(); eq(frame.Visible,false); eq(mobileButton(lib,"phone"),icon)
+		eq(icon:GetAttribute("AsterValue"),"hidden"); eq(lib._env.runtime.screen:FindFirstChild("RestoreWindows",true),nil)
+		icon.Activated:Fire(Mock.input("Touch"),1); Mock.flush(); eq(frame.Visible,true); eq(mobileButton(lib,"phone"),icon)
+	end
+	eq(root:Find("phone-setting"),control); eq(control:GetAttribute("AsterValue"),"true")
+	eq(lib:GetDiagnostics().instances,baseline.instances); eq(lib:GetDiagnostics().connections,baseline.connections)
+end)
+test("touch availability changes preserve the desktop restore fallback",function()
+	local lib=new(); local UI=lib.UI; local ref={}
+	UI.mount(UI.h("Window",{id="input-switch",windowRef=ref})); Mock.flush(); eq(mobileButton(lib,"input-switch"),nil)
+	ref.current:Hide(); Mock.flush(); assert(lib._env.runtime.screen:FindFirstChild("RestoreWindows",true))
+	Mock.services.UserInputService.TouchEnabled=true; Mock.flush(); assert(mobileButton(lib,"input-switch")); eq(lib._env.runtime.screen:FindFirstChild("RestoreWindows",true),nil)
+	Mock.services.UserInputService.TouchEnabled=false; Mock.flush(); eq(mobileButton(lib,"input-switch"),nil); assert(lib._env.runtime.screen:FindFirstChild("RestoreWindows",true))
+end)
+test("scripters can force or disable mobile toggles per window and update them live",function()
+	local lib=new({mobileToggle=true})
+	local shown=lib:CreateWindow({Id="forced",Title="Forced"}); shown:AddTab({Title="Main"})
+	local disabled=lib:CreateWindow({Id="disabled",Title="Disabled",MobileToggle=false}); disabled:AddTab({Title="Main"}); Mock.flush()
+	assert(mobileButton(lib,"forced")); eq(mobileButton(lib,"disabled"),nil)
+	disabled:Update({MobileToggle=true}); Mock.flush(); assert(mobileButton(lib,"disabled"))
+	disabled:Update({MobileToggle=false}); disabled:Hide(); Mock.flush(); eq(mobileButton(lib,"disabled"),nil); assert(lib._env.runtime.screen:FindFirstChild("RestoreWindows",true))
+	shown:Update({Title="Renamed"}); Mock.flush(); eq(mobileButton(lib,"forced"):GetAttribute("AsterLabel"),"Hide Renamed")
+	raises(function() Library.new({mobileToggle="yes"}) end,"mobileToggle")
+end)
+test("mobile icons control independent windows and disappear when their owner closes",function()
+	local lib=new({mobileToggle=true}); local UI=lib.UI; local a,b={},{}
+	local first=UI.mount(UI.h("Window",{id="first-mobile",windowRef=a})); UI.mount(UI.h("Window",{id="second-mobile",windowRef=b})); Mock.flush()
+	mobileButton(lib,"first-mobile").Activated:Fire(); Mock.flush(); eq(a.current.visible,false); eq(b.current.visible,true)
+	b.current:Close(); Mock.flush(); eq(mobileButton(lib,"second-mobile"),nil); assert(mobileButton(lib,"first-mobile"))
+	first:Unmount(); Mock.flush(); eq(mobileButton(lib,"first-mobile"),nil); eq(lib._env.runtime.screen:FindFirstChild("MobileWindowToggles",true),nil)
+end)
+test("mobile reopening restores minimized windows and dismisses their text keyboard on hide",function()
+	local lib=new({mobileToggle=true}); local UI=lib.UI; local ref={}
+	local root=UI.mount(UI.h("Window",{id="keyboard-mobile",windowRef=ref,size={600,400},defaultVisible=false},UI.h("TextInput",{name="mobile-input",defaultValue="Saved"}))); Mock.flush()
+	eq(ref.current.visible,false); assert(mobileButton(lib,"keyboard-mobile")); mobileButton(lib,"keyboard-mobile").Activated:Fire(); Mock.flush()
+	local input=root:Find("mobile-input"); input:CaptureFocus(); assert(Mock.focused==input)
+	local icon=mobileButton(lib,"keyboard-mobile"); icon.Activated:Fire(); Mock.flush(); eq(Mock.focused,nil); eq(ref.current.visible,false)
+	icon.Activated:Fire(); Mock.flush(); ref.current:Minimize(); Mock.flush(); icon.Activated:Fire(); Mock.flush(); icon.Activated:Fire(); Mock.flush()
+	eq(ref.current.minimized,false); eq(ref.current:GetRect().height,400); eq(input.Text,"Saved")
+end)
+test("mobile toggle respects modal interaction ownership",function()
+	local lib=new({mobileToggle=true}); local UI=lib.UI; local ref={}
+	UI.mount(UI.h("Window",{id="modal-mobile",windowRef=ref})); Mock.flush()
+	local modal=UI.mount(UI.h("Modal",{title="Active dialog"},UI.h("Button",{text="Dialog action"}))); Mock.flush()
+	mobileButton(lib,"modal-mobile").Activated:Fire(); Mock.flush(); eq(ref.current.visible,true)
+	modal:Unmount(); mobileButton(lib,"modal-mobile").Activated:Fire(); Mock.flush(); eq(ref.current.visible,false)
+end)
+test("mobile toggles remain within portrait and landscape safe-area bounds",function()
+	Mock.services.UserInputService.TouchEnabled=true
+	local lib=new(); lib:Mount(lib.UI.h("Window",{id="rotate-mobile"})); Mock.flush()
+	for _,size in {Vector2.new(360,640),Vector2.new(640,360)} do
+		Mock.viewport=size; Mock.flush(); local icon=mobileButton(lib,"rotate-mobile")
+		assert(icon.AbsolutePosition.X>=0 and icon.AbsolutePosition.Y>=0)
+		assert(icon.AbsolutePosition.X+icon.AbsoluteSize.X<=size.X and icon.AbsolutePosition.Y+icon.AbsoluteSize.Y<=size.Y)
+	end
+	Mock.viewport=Vector2.new(1024,768)
+end)
 
 print(string.format("RESULT %d passed, %d failed",passed,failed))
 assert(failed==0,"MattLib regression suite failed")

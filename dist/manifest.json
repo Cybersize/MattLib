@@ -1,6 +1,6 @@
 {
-  "bundle_sha256": "d3c0a70f5c53fe09b19d7dfad9bfba9756db39de33a1fea67946122f52d9a721",
-  "bytes": 191272,
+  "bundle_sha256": "4b1684646ad5fd6c883100ee53a5270329ba6d9b07f0a0d2424a93e36cf28593",
+  "bytes": 194219,
   "dependencies": {
     "animation/Animator": [
       "utils/Scope",
@@ -221,6 +221,6 @@
     ]
   },
   "modules": 39,
-  "source_sha256": "918133eb79748b52d36c07d050eda9062cc4716b486cc583fc008618d203ce0b",
-  "version": "1.2.1"
+  "source_sha256": "c7966b04062d6c175c08c0747afa5de64b20047612245cb5c407109bb7c929b2",
+  "version": "1.2.2"
 }

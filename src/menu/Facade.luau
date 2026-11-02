@@ -98,7 +98,7 @@ local function WindowView(p)
 	end
 	local o=window.options
 	return h("Window",{id=window.id,name=window.name,title=o.Title or "Application",size=o.Size or {720,500},position=o.Position,
-		minSize=o.MinSize,maxSize=o.MaxSize,fixedSize=o.FixedSize,openKey=o.OpenKey,theme=o.Theme,design=o.Design,wallpaper=o.Wallpaper,windowRef=window.windowRef,
+		minSize=o.MinSize,maxSize=o.MaxSize,fixedSize=o.FixedSize,openKey=o.OpenKey,theme=o.Theme,design=o.Design,wallpaper=o.Wallpaper,mobileToggle=o.MobileToggle,windowRef=window.windowRef,
 		onClose=function()
 			window.scope:Delay(if window.library._env.animator.reducedMotion then 0 else window.library.Theme:Get().motion.normal,function() window:Destroy() end)
 			if o.OnClose then o.OnClose() end

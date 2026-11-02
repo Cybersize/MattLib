@@ -28,6 +28,8 @@ local function WindowBase(p)
 	local env=Hooks.useEnvironment()
 	local theme=Hooks.useTheme()
 	local header=theme.design.titleHeight
+	local mobileToggle=if p.mobileToggle~=nil then p.mobileToggle else env.library.options.mobileToggle
+	assert(mobileToggle==nil or type(mobileToggle)=="boolean","mobileToggle must be true, false, or omitted for automatic touch support")
 	local frame,title,grip,handle,chrome=Hooks.useRef(nil),Hooks.useRef(nil),Hooks.useRef(nil),Hooks.useRef(nil),Hooks.useRef(nil)
 	local visible,setVisible=Hooks.useState(p.defaultVisible~=false)
 	local minimized,setMinimized=Hooks.useState(false)
@@ -38,7 +40,7 @@ local function WindowBase(p)
 	Hooks.useEffect(function()
 		if not present then return end
 		local entry=env.windows:Register({id=id,title=p.title,frame=frame.current,titlebar=title.current,grip=grip.current,size=p.size or {760,540},
-			position=p.position,minSize=p.minSize,maxSize=p.maxSize,fixedSize=p.fixedSize,openKey=p.openKey,visible=visible,titleHeight=header,
+			position=p.position,minSize=p.minSize,maxSize=p.maxSize,fixedSize=p.fixedSize,openKey=p.openKey,visible=visible,titleHeight=header,mobileToggle=mobileToggle,
 			onVisible=function(show) setVisible(show); if latest.current.onVisibleChange then latest.current.onVisibleChange(show) end end,
 			onMinimized=setMinimized,onMove=p.onMove,onResize=p.onResize,onClose=function()
 				setClosed(true); if latest.current.onClose then latest.current.onClose() end
@@ -52,6 +54,12 @@ local function WindowBase(p)
 		return function() entry:Detach(); handle.current=nil; if p.windowRef then p.windowRef.current=nil end end
 	end,{id,present})
 	Hooks.useEffect(function() if handle.current then handle.current:SetTitleHeight(header) end end,{header})
+	Hooks.useEffect(function()
+		local entry=handle.current
+		if entry and (entry.options.mobileToggle~=mobileToggle or entry.options.title~=p.title) then
+			entry.options.mobileToggle=mobileToggle; entry.options.title=p.title; env.windows:_publish()
+		end
+	end,{mobileToggle,p.title,present})
 	Hooks.useEffect(function()
 		if not present or not chrome.current then return end
 		local instance=chrome.current
@@ -99,12 +107,44 @@ end
 function Window.RecoveryHost()
 	local env=Hooks.useEnvironment()
 	local hidden=Hooks.useSignal(env.windows.hidden)
+	local entries=Hooks.useSignal(env.windows.list)
 	local viewport=Hooks.useSignal(env.runtime.viewport)
-	if #hidden==0 then return nil end
-	return h("Frame",{name="RestoreWindows",style={width=170,height=math.min(#hidden*44,math.max(44,viewport.Y-16)),position=UDim2.new(0,8,1,-8),anchor=Vector2.new(0,1),zIndex=1000000}}, {
-		h("ScrollArea",{contentStyle={gap=6}},Element.list(hidden,function(entry)
+	local uis=env.runtime.services.UserInputService
+	local touch,setTouch=Hooks.useState(uis.TouchEnabled)
+	local scope=Common.scope()
+	Hooks.useEffect(function()
+		return scope:Connect(uis:GetPropertyChangedSignal("TouchEnabled"),function() setTouch(uis.TouchEnabled) end)
+	end,{uis})
+	local mobile,covered,tray={},{},{}
+	for _,entry in entries do
+		if entry.options.mobileToggle==true or (entry.options.mobileToggle==nil and touch) then
+			table.insert(mobile,entry); covered[entry.id]=true
+		end
+	end
+	for _,entry in hidden do if not covered[entry.id] then table.insert(tray,entry) end end
+	return h(Element.Fragment,{}, {
+		#mobile>0 and h("Frame",{key="mobile",name="MobileWindowToggles",style={width=56,height=math.min(#mobile*56-8,math.max(48,viewport.Y-24)),
+			position=UDim2.new(1,-8,0.5,0),anchor=Vector2.new(1,0.5),zIndex=1000000}},
+			h("ScrollArea",{native={ScrollBarThickness=2},contentStyle={width=48,gap=8,padding=0}},Element.list(mobile,function(entry)
+				local title=entry.options.title or "MattLib"
+				return h("Button",{name="MobileToggle:"..entry.id,text="M",active=entry.visible,accessibleName=(if entry.visible then "Hide " else "Show ")..title,
+					accessibleValue=if entry.visible then "shown" else "hidden",attributes={MattWindow=entry.id,MattMobileToggle=true},
+					style={width=48,height=48,paddingX=0,radius="$radius.pill",font="$typography.bold",textSize=24,color="$accent",borderColor="$accent",borderTransparency=0.25,
+						backgroundTransparency=0.03,active={background="$accentSoft"},hover={scale=1},pressed={scale=0.96}},
+					onClick=function()
+						if not entry.alive or entry.closing or #env.overlays.stack>0 then return end
+						if entry.visible then
+							local focused=uis:GetFocusedTextBox()
+							if focused and focused:IsDescendantOf(entry.frame) then focused:ReleaseFocus() end
+							entry:Hide()
+						else entry:Restore() end
+					end})
+			end,function(entry) return entry.id end))) or false,
+		#tray>0 and h("Frame",{key="restore",name="RestoreWindows",style={width=170,height=math.min(#tray*44,math.max(44,viewport.Y-16)),position=UDim2.new(0,8,1,-8),anchor=Vector2.new(0,1),zIndex=1000000}}, {
+			h("ScrollArea",{contentStyle={gap=6}},Element.list(tray,function(entry)
 			return h("Button",{text="↗  "..(entry.options.title or entry.id),onClick=function() entry:Restore() end,accessibleName="Restore "..(entry.options.title or entry.id)})
-		end,function(entry) return entry.id end)),
+			end,function(entry) return entry.id end)),
+		}) or false,
 	})
 end
 return Window

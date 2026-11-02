@@ -16,7 +16,7 @@ function Manager.clamp(rect,viewport,minSize,maxSize)
 	return {x=math.clamp(rect.x,margin,math.max(margin,viewport.X-width-margin)),y=math.clamp(rect.y,margin,math.max(margin,viewport.Y-height-margin)),width=width,height=height}
 end
 function Manager.new(runtime,input,overlays)
-	local self=setmetatable({runtime=runtime,input=input,overlays=overlays,entries={},scope=Scope.new(),serial=0,hidden=Signal.new({})},Manager)
+	local self=setmetatable({runtime=runtime,input=input,overlays=overlays,entries={},scope=Scope.new(),serial=0,hidden=Signal.new({}),list=Signal.new({})},Manager)
 	self.scope:Add(runtime.viewport:subscribe(function() for _,entry in self.entries do entry:_apply() end end))
 	return self
 end
@@ -33,9 +33,16 @@ function Manager:_viewport()
 	return viewport
 end
 function Manager:_publish()
-	local hidden={}
-	for _,entry in self.entries do if not entry.visible then table.insert(hidden,entry) end end
+	local hidden,entries={},{}
+	for _,entry in self.entries do
+		if entry.alive and not entry.closing then
+			table.insert(entries,entry)
+			if not entry.visible then table.insert(hidden,entry) end
+		end
+	end
+	table.sort(entries,function(a,b) return a.order<b.order end)
 	table.sort(hidden,function(a,b) return a.order<b.order end)
+	self.list:set(entries)
 	self.hidden:set(hidden)
 end
 function Entry:_apply()
@@ -86,7 +93,7 @@ function Entry:SetTitleHeight(height)
 end
 function Entry:GetRect() return table.clone(self.rect) end
 function Entry:Close()
-	if self.alive and not self.closing then self.closing=true; self.options.onClose() end
+	if self.alive and not self.closing then self.closing=true; self.manager:_publish(); self.options.onClose() end
 end
 function Entry:Detach()
 	if not self.alive then return end
@@ -156,6 +163,6 @@ function Manager:Register(options)
 end
 function Manager:Destroy()
 	for _,entry in table.clone(self.entries) do entry:Detach() end
-	self.scope:Destroy(); self.hidden:Destroy()
+	self.scope:Destroy(); self.hidden:Destroy(); self.list:Destroy()
 end
 return Manager

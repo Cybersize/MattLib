@@ -214,6 +214,30 @@ return function(Library)
 		assert(swatch.AbsolutePosition.X>=button.AbsolutePosition.X,"Swatch is outside its button")
 		assert(swatch.AbsolutePosition.X+swatch.AbsoluteSize.X+4<=textStart,"Swatch overlaps hex text")
 	end)
+	test("native mobile launcher stays separate from a hidden window",function(lib,UI)
+		local ref={}
+		local root=UI.mount(UI.h("Window",{id="native-launcher",mobileToggle=true,windowRef=ref}))
+		for _=1,3 do RunService.Heartbeat:Wait(); lib:Flush() end
+		local icon=lib._env.runtime.screen:FindFirstChild("MobileToggle:native-launcher",true)
+		assert(icon and icon:IsA("GuiButton") and icon.AbsoluteSize.X>=44 and icon.AbsoluteSize.Y>=44)
+		assert(not icon:IsDescendantOf(ref.current.frame))
+		ref.current:Hide(); lib:Flush(); RunService.Heartbeat:Wait(); lib:Flush()
+		equal(lib._env.runtime.screen:FindFirstChild("MobileToggle:native-launcher",true),icon); assert(icon.Visible); equal(icon:GetAttribute("AsterValue"),"hidden")
+		ref.current:Restore(); lib:Flush(); RunService.Heartbeat:Wait(); lib:Flush(); equal(icon:GetAttribute("AsterValue"),"shown")
+		local bounds=lib._env.runtime.layers.main
+		assert(icon.AbsolutePosition.X>=bounds.AbsolutePosition.X and icon.AbsolutePosition.X+icon.AbsoluteSize.X<=bounds.AbsolutePosition.X+bounds.AbsoluteSize.X)
+		root:Unmount(); lib:Flush(); equal(lib._env.runtime.screen:FindFirstChild("MobileToggle:native-launcher",true),nil)
+	end)
+	test("native menu mobile launcher options update without replacing controls",function(lib)
+		local window=lib:CreateWindow({Id="native-launcher-options",Title="Touch",MobileToggle=true})
+		local tab=window:AddTab({Title="Main"}); local toggle=tab:AddToggle({Title="Value",Default=true}); lib:Flush()
+		for _=1,2 do RunService.Heartbeat:Wait(); lib:Flush() end
+		local instance=toggle:GetInstance(); assert(lib._env.runtime.screen:FindFirstChild("MobileToggle:native-launcher-options",true))
+		window:Update({MobileToggle=false})
+		for _=1,2 do RunService.Heartbeat:Wait(); lib:Flush() end
+		equal(lib._env.runtime.screen:FindFirstChild("MobileToggle:native-launcher-options",true),nil)
+		equal(toggle:GetInstance(),instance); equal(toggle:GetValue(),true); window:Destroy()
+	end)
 	test("native 360x640 constrained viewport layout",function(lib,UI)
 		local env=lib:_ensure()
 		for _,layer in env.runtime.layers do layer.Size=UDim2.fromOffset(360,640) end

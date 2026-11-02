@@ -85,7 +85,7 @@ local classProps={Frame={},CanvasGroup={GroupTransparency=0,GroupColor3=Color3.n
 	UICorner={CornerRadius=UDim.new(0,8)},UIStroke={Thickness=1,Color=Color3.new(),Transparency=0,ApplyStrokeMode=Enum.ApplyStrokeMode.Contextual},
 	UIScale={Scale=1},UIGradient={Color=ColorSequence.new(Color3.new(1,1,1)),Transparency=NumberSequence.new(0),Rotation=0,Offset=Vector2.new()},
 	UISizeConstraint={MinSize=Vector2.new(),MaxSize=Vector2.new(100000,100000)},UIFlexItem={FlexMode=Enum.UIFlexMode.None,GrowRatio=0,ShrinkRatio=0},
-	BindableFunction={OnInvoke=false},PlayerGui={},Player={},Folder={},UserInputService={},GuiService={SelectedObject=false},TweenService={},HttpService={},RunService={},Players={LocalPlayer=false},
+	BindableFunction={OnInvoke=false},PlayerGui={},Player={},Folder={},UserInputService={TouchEnabled=false},GuiService={SelectedObject=false},TweenService={},HttpService={},RunService={},Players={LocalPlayer=false},
 }
 local guiClasses={Frame=true,CanvasGroup=true,TextLabel=true,TextButton=true,TextBox=true,ImageLabel=true,ImageButton=true,ScrollingFrame=true}
 local textClasses={TextLabel=true,TextButton=true,TextBox=true}
