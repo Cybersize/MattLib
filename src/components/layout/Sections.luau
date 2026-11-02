@@ -14,18 +14,18 @@ function Sections.Reveal(p)
 		local instance=ref.current
 		local scale=instance:FindFirstChildOfClass("UIScale")
 		local scope=Scope.new()
-		if env.animator.reducedMotion then instance.GroupTransparency=0; if scale then scale.Scale=1 end
+		if env.animator.reducedMotion then env.animator:Fade(instance,1,0); if scale then scale.Scale=1 end
 		else
-			instance.GroupTransparency=1
+			env.animator:Fade(instance,0,0)
 			if scale then scale.Scale=0.985 end
 			scope:Delay(math.min(0.32,p.delay or (p.order or 0)*theme.motion.stagger),function()
-				scope:Add(env.animator:To(instance,{GroupTransparency=0},theme.motion.reveal,{channel="reveal"}))
+				scope:Add(env.animator:Fade(instance,1,theme.motion.reveal))
 				if scale then scope:Add(env.animator:To(scale,{Scale=1},theme.motion.reveal,{channel="reveal"})) end
 			end)
 		end
 		return function() scope:Destroy() end
 	end,{theme.design.name,p.replayKey})
-	return h("@CanvasGroup",{name=p.name,ref=ref,motion=false,style=Style.merge({width="100%",height="auto",direction="column",gap="$spacing.sm",scale=1},p.style)},p.children)
+	return h("@Frame",{name=p.name,ref=ref,motion=false,style=Style.merge({width="100%",height="auto",direction="column",gap="$spacing.sm",scale=1},p.style)},p.children)
 end
 function Sections.Section(p)
 	local theme=Hooks.useTheme()

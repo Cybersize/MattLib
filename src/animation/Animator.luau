@@ -5,7 +5,36 @@ local Signal = require(script.Parent.Parent.core.Signal)
 local Animator = {}
 Animator.__index = Animator
 function Animator.new(service, reducedMotion)
-	return setmetatable({ service = service, reducedMotion = reducedMotion == true, motion=Signal.new(reducedMotion~=true), active = {}, alive = true }, Animator)
+	return setmetatable({ service = service, reducedMotion = reducedMotion == true, motion=Signal.new(reducedMotion~=true), active = {},
+		visualBases=setmetatable({},{__mode="k"}),alive = true }, Animator)
+end
+function Animator:RegisterVisual(instance,properties)
+	local values={}
+	for _,property in {"BackgroundTransparency","TextTransparency","ImageTransparency","Transparency"} do
+		if type(properties[property])=="number" then values[property]=properties[property] end
+	end
+	self.visualBases[instance]=values
+end
+-- Fade the original native objects. CanvasGroup would rasterize and downsample their text.
+function Animator:Fade(root,opacity,duration,options)
+	options=options or {}
+	local scope=Scope.new()
+	local function visit(instance)
+		if instance:GetAttribute("MattWallpaper")~=nil then return end
+		if instance~=root and instance:IsA("GuiObject") and not instance.Visible then return end
+		local goals={}
+		for property,base in self.visualBases[instance] or {} do
+			if base<1 then
+				if options.from~=nil and not self.reducedMotion then instance[property]=1-(1-base)*options.from end
+				local target=1-(1-base)*opacity
+				if instance[property]~=target then goals[property]=target end
+			end
+		end
+		if next(goals) then scope:Add(self:To(instance,goals,duration,{channel="native-fade"})) end
+		for _,child in instance:GetChildren() do visit(child) end
+	end
+	visit(root)
+	return function() scope:Destroy() end
 end
 function Animator:Cancel(instance, channel, finish)
 	local channels = self.active[instance]
@@ -56,6 +85,7 @@ end
 function Animator:Forget(instance)
 	local channels = self.active[instance]
 	if channels then for channel in table.clone(channels) do self:Cancel(instance, channel) end end
+	self.visualBases[instance]=nil
 end
 function Animator:SetReducedMotion(value)
 	self.reducedMotion = value == true

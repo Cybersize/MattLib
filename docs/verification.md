@@ -1,22 +1,23 @@
-# MattLib 1.2 verification
+# MattLib 1.2.1 verification
 
 The current runtime and self-contained preview contain MintGlass, Ember, Vector and Aura, native animated wallpapers, optional textured wallpapers and responsive control columns. Results below identify executed checks separately from remaining visual/device testing.
 
 | Check | Result | Evidence and limits |
 | --- | --- | --- |
 | Luau compilation | **53 files compiled** with official Luau 0.744 | Source, five example factories, loaders, Studio scripts, distribution aliases, Preview.lua and generated runners. Compilation is not a strict Roblox typecheck. |
-| Runtime regression suite | **85 passed, 0 failed** | [tests/results.json](../tests/results.json). Actual bundle against a limited engine double, including all four designs, state-preserving switching, adaptive layout, wallpaper lifetime/caching/failure fixtures and all five examples. |
-| Build/distribution suite | **10 passed** | [tests/build-results.json](../tests/build-results.json). Graph/cache validation, deterministic output, rejected imports, matching aliases, preview and Studio place. |
+| Runtime regression suite | **89 passed, 0 failed** | [tests/results.json](../tests/results.json). Actual bundle against a limited engine double, including all four designs, direct native fades, non-rasterized text, adaptive layout, wallpaper lifetime/caching/failure fixtures and all five examples. |
+| Build/distribution suite | **11 passed** | [tests/build-results.json](../tests/build-results.json). Graph/cache validation, deterministic output, rejected imports, matching aliases, preview, Studio place and full-resolution PNG dimensions/chunk checksums. |
 | Actual Preview.lua | **Passed** | [tests/preview-results.json](../tests/preview-results.json). Full live-picker gallery mounts and destroys without managed instance/listener/subscription/tween leaks in the engine double. |
-| Native Roblox Studio 1.2 | **23 passed, 0 failed** | [tests/studio/results.json](../tests/studio/results.json). Real Studio 0.745.0.7451137 Play client; tested bundle and gallery sources match the final distribution/preview. Camera viewport 812x675. |
+| Native Roblox Studio 1.2.1 | **26 passed, 0 failed** | [tests/studio/results.json](../tests/studio/results.json). Real Studio 0.745.0.7451137 Play client; tested bundle and gallery sources match the final distribution/preview. Camera viewport 812x675. |
 | Native designs and gallery | **All four passed** | Native runtime checked gradient/scale/glow creation and removal, layout/state identity through switches, scoped window designs and each of the four gallery factory variants. The gallery also reported ready after smoke cleanup. |
 | Native constrained mobile layout | **Passed at 360x640** | A real native-layer constraint fixture, including window bounds, top-navigation fallback and modal sizing. This is not a physical phone test. |
 | Native dense gallery layout | **Passed at 790x640** | 148px sidebar, 582px content area, two 285px cards separated by 12px. Actual engine positions establish non-overlap. See the stored layout_metrics. |
 | Native wallpaper motion | **Passed** | Actual ribbon Position changed over time. Reduced motion stops it, hidden windows release the loops, and showing/resuming restarts them. Adaptive-grid tests check row positions and input identity through wrapping. |
+| Native direct text rendering | **Passed** | Shared Window/Tabs/Section/Modal/Toast instances contain no CanvasGroup layers. Native per-object fades restore text/stroke transparency; swatch bounds leave the hex label clear. These are structural and property checks, not screenshot approval. |
 | Executor compatibility | **Capability fixtures only** | Optional gethui/filesystem/image-adapter success, cache hits, download failure and native fallback are covered. No live executor was used; the generated texture has not been visually checked in an executor. |
-| Visual and physical-device review | **Outstanding** | Two current Studio screenshot attempts failed with FrameArrived/window-capture channel timeouts. No screenshot acceptance or exact match to the concepts is claimed. Native measurements and movement tests are independently recorded. |
+| Visual and physical-device review | **Outstanding** | Previous Studio screenshot attempts failed with FrameArrived/window-capture channel timeouts. The current attempt was stopped with the user's physical Escape key; desktop control stopped immediately. The user's 1.2 screenshots exposed atlas bleed, excessive wallpaper strength and soft rendering. Version 1.2.1 fixes these paths and adds native structural checks; final live-executor screenshot acceptance remains separate. |
 
-Exact runtime/preview hashes are in [dist/manifest.json](../dist/manifest.json) and [dist/preview-manifest.json](../dist/preview-manifest.json). Native evidence records the matching bundle hash and UTC timestamp. Historical evidence is retained separately as [results-v1.0.json](../tests/studio/results-v1.0.json) and [results-v1.1.json](../tests/studio/results-v1.1.json); those are not used to claim current-version validation.
+Exact runtime/preview hashes are in [dist/manifest.json](../dist/manifest.json) and [dist/preview-manifest.json](../dist/preview-manifest.json). Native evidence records the matching bundle hash and UTC timestamp. Historical evidence is retained as results-v1.0.json, results-v1.1.json and [results-v1.2.0.json](../tests/studio/results-v1.2.0.json); those are not used to claim current-version validation.
 
 ## Regression coverage
 
@@ -28,7 +29,9 @@ A switching regression found that an Ember section separator shifted unkeyed con
 
 The native suite checks actual engine assignments, property delivery, lifecycle resources, HttpService JSON, native flex/modifiers, per-design chrome/navigation and gallery startup. It does not synthesize Activated events or establish physical input/visual fidelity.
 
-The wallpaper suite verifies bounded repeating tweens, no component rerenders during steady animation, hide/minimize/disabled-ScreenGui pause and resume, retained inactive-tab behavior, reduced-motion resume, design-specific artwork, image tile selection, cache reuse, rejected invalid PNG metadata and cancellation before deferred fetch work. PNG decoding and executor-specific asset rendering remain separate from these fixtures. The generated artwork is 1536x1024; the optional adapter validates those atlas dimensions before caching it.
+The wallpaper suite verifies bounded repeating tweens, no component rerenders during steady animation, hide/minimize/disabled-ScreenGui pause and resume, retained inactive-tab behavior, reduced-motion resume, separate per-design files, cache reuse, lazy fetches, rejected invalid PNG metadata and cancellation before deferred fetch work. It also checks geometric legacy-atlas isolation without ImageRect cropping. Each production image is 1536x1024; the optional adapter validates those dimensions before caching it. Build checks verify all PNG chunk CRCs. Executor-specific decoding/rendering remains separate from these fixtures.
+
+Version 1.2.1 replaces shared-component CanvasGroups with native Frames and per-object opacity tweens. A regression checks text/image/background/stroke alpha restoration after interrupted and replayed fades, including reduced motion. The explicit native CanvasGroup host is retained for applications that intentionally choose it.
 
 ## Remaining acceptance
 

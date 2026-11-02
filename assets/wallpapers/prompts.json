@@ -1,0 +1,23 @@
+{
+  "tool": "built-in imagegen",
+  "source_reference": "../wallpapers-v1.png",
+  "transparent_background": false,
+  "prompts": [
+    {
+      "name": "MintGlass",
+      "prompt": "Use case: stylized-concept. Asset type: single full-resolution 1536x1024 landscape wallpaper for a real Roblox interface. The supplied image is a STYLE REFERENCE ATLAS. Use ONLY the TOP LEFT mint-glass artwork as the reference. Recreate that single wallpaper at full resolution, filling the entire canvas with near-black graphite #0A1216 and refined translucent mint/teal light ribbons. A slender luminous ribbon rises from lower left and curls toward upper right. Sculptural fine glass edges, controlled glow, subtle natural grain. Keep the upper left and center mostly dark with generous negative space for real UI text. Sharply defined ribbon edges, no lens blur, no bokeh, no noisy particle cloud. This is ONE mint wallpaper, not four quadrants. Absolutely no other palette, no orange, no purple, no blue grid, no dividing line, no collage, no frame, no UI, no text, no logo, no watermark. Preserve the elegant material language of the reference while making the art restrained enough for background use."
+    },
+    {
+      "name": "Ember",
+      "prompt": "Use case: stylized-concept. Asset type: single full-resolution 1536x1024 landscape wallpaper for a real Roblox interface. The supplied image is a STYLE REFERENCE ATLAS. Use ONLY the TOP RIGHT warm-carbon/orange artwork as the reference. Create ONE refined matte warm carbon #161514 background with very subtle tactile grain, a thin elegant orange ember seam sweeping through the LOWER RIGHT edge, a restrained warm glow fading gently into the charcoal. Most of the image, especially upper left, center and upper half, must remain dark charcoal and low contrast for interface text. Much quieter than a fire or lava scene. Crisp fine seam detail, no lens blur, no bokeh, no smoke, no clouds, no giant burning stripe, no big particles. Fill the entire landscape canvas with this one design. No mint, no purple, no blue grid, no dividing lines, no atlas, no collage, no UI, no text, no logos, no watermark."
+    },
+    {
+      "name": "Vector",
+      "prompt": "Use case: stylized-concept. Asset type: single full-resolution 1536x1024 landscape wallpaper for a real Roblox interface. The supplied image is a STYLE REFERENCE ATLAS. Use ONLY the BOTTOM LEFT midnight navy/cobalt grid artwork as a reference. Create ONE very crisp midnight navy #0A121D technical background with fine evenly spaced low-contrast cobalt grid lines, a mild perspective near the lower part, a small number of precise blue light intersections. Flat dark negative space toward upper left and center for UI text. Precision and restraint; grid line intersections should be sharply defined, no depth-of-field, no lens blur, no bloom clouds, no large fog. Fill the entire canvas edge to edge with only this blue technical wallpaper. No orange, no mint, no lavender ribbons, no dividing lines, no atlas, no collage, no text, no numbers, no icons, no UI, no logos, no watermark."
+    },
+    {
+      "name": "Aura",
+      "prompt": "Use case: stylized-concept. Asset type: single full-resolution 1536x1024 landscape wallpaper for a real Roblox interface. The supplied image is a STYLE REFERENCE ATLAS. Use ONLY the BOTTOM RIGHT plum/lavender artwork as a reference. Create ONE premium abstract wallpaper of dark plum #1A1625 with refined flowing sculptural translucent lavender glass/silk ribbons sweeping across the lower part and gently climbing the right edge. Clean curved highlighted edges and rich shaded folds. Keep upper left and center largely dark and calm for real UI text. Preserve softness of material lighting while the edges and surface detail stay sharply resolved. No photographic defocus, no bokeh, no lens blur, no busy particles. Fill the whole canvas with only this lavender design. No green, no orange, no blue grid, no atlas, no dividing lines, no collage, no UI, no text, no logos, no watermark."
+    }
+  ]
+}

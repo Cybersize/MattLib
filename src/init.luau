@@ -42,7 +42,7 @@ local Library={}
 Library.__index=Library
 function Library.new(options)
 	options=options or {}
-	local self=setmetatable({Version="1.2.0",options=options,_roots={},_scope=Scope.new(),_destroyed=false,Designs=Designs.Names},Library)
+	local self=setmetatable({Version="1.2.1",options=options,_roots={},_scope=Scope.new(),_destroyed=false,Designs=Designs.Names},Library)
 	self.Theme=Theme.new(Designs.resolve(options.design or "MintGlass",options.theme))
 	self.Config=Config.new(game:GetService("HttpService"),Adapter.capabilities(options.capabilities),options.config)
 	self.UI={h=Element.h,Fragment=Element.Fragment,portal=Element.portal,list=Element.list,signal=Signal.new,derived=Signal.derived,batch=Signal.batch,
@@ -119,8 +119,10 @@ function Library:GetRuntimeInfo()
 	local capabilities={}
 	for name in Adapter.capabilities(self.options.capabilities) do capabilities[name]=true end
 	local wallpaper=self._env and self._env.runtime.wallpaper
+	local mode,wallpaperError
+	if wallpaper then mode,wallpaperError=wallpaper:Status(self:GetDesign()) end
 	return {capabilities=capabilities,parentMode=self._env and self._env.runtime.parentMode or "uninitialized",version=self.Version,
-		wallpaper=if wallpaper then wallpaper.mode else "uninitialized",wallpaperError=wallpaper and wallpaper.error}
+		wallpaper=mode or "uninitialized",wallpaperError=wallpaperError}
 end
 function Library:Destroy()
 	if self._destroyed then return end

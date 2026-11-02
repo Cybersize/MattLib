@@ -43,6 +43,8 @@ function Host.refresh(node, animate)
 	if not node.alive then return end
 	local props, decorations = Style.resolve(node.props.style, node.env.theme:Get(), node.states, node.className)
 	local desired = {BorderSizePixel=0, BackgroundTransparency=1}
+	if node.className=="TextLabel" or node.className=="TextButton" or node.className=="TextBox" then desired.TextTransparency=0 end
+	if node.className=="ImageLabel" or node.className=="ImageButton" then desired.ImageTransparency=0 end
 	for key, value in node.props.native or {} do desired[key] = value end
 	for key, value in props do desired[key] = value end
 	desired.Name = node.props.name or node.className
@@ -52,6 +54,7 @@ function Host.refresh(node, animate)
 	end
 	if node.className == "TextBox" then desired.TextEditable = not node.props.disabled end
 	updateProperties(node, desired, animate and node.props.motion ~= false)
+	node.env.animator:RegisterVisual(node.instance,desired)
 	for key, instance in table.clone(node.decorations) do
 		if not decorations[key] then
 			node.env.animator:Forget(instance)
@@ -86,6 +89,7 @@ function Host.refresh(node, animate)
 			end
 		end
 		if next(goals) then node.env.animator:To(instance,goals,node.env.theme:Get().motion.fast,{channel="style",merge=true}) end
+		node.env.animator:RegisterVisual(instance,spec)
 		instance.Parent=if spec.parentKey then node.decorations[spec.parentKey] else node.instance
 	end
 end

@@ -1,5 +1,7 @@
 from __future__ import annotations
 import os
+import struct
+import zlib
 import sys
 import tempfile
 import unittest
@@ -74,12 +76,27 @@ class DistributionTests(unittest.TestCase):
         self.assertEqual((build.ROOT/'Preview.lua').read_text(encoding='utf-8'),source)
         self.assertNotIn('loadstring(',source)
         self.assertEqual(metadata['required_code_downloads_inside_preview'],0)
-        self.assertEqual(metadata['optional_wallpaper_requests_on_cache_miss'],1)
+        self.assertEqual(metadata['optional_wallpaper_requests_per_design_on_cache_miss'],1)
+        self.assertEqual(metadata['wallpaper_designs'],4)
         self.assertNotIn('require(script',source)
 
     def test_checked_in_distribution_matches_source(self):
         text, _ = build.bundle()
         self.assertEqual((build.ROOT / "dist/Library.lua").read_text(encoding="utf-8"), text)
+
+    def test_four_standalone_wallpapers_are_full_resolution_valid_pngs(self):
+        for name in ('mint-glass','ember','vector','aura'):
+            content=(build.ROOT/f'assets/wallpapers/{name}-v2.png').read_bytes()
+            self.assertEqual(content[:8],b'\x89PNG\r\n\x1a\n')
+            self.assertEqual(struct.unpack('>II',content[16:24]),(1536,1024))
+            cursor=8
+            while cursor<len(content):
+                length=struct.unpack('>I',content[cursor:cursor+4])[0]
+                chunk=content[cursor+4:cursor+8+length]
+                checksum=struct.unpack('>I',content[cursor+8+length:cursor+12+length])[0]
+                self.assertEqual(zlib.crc32(chunk)&0xffffffff,checksum)
+                cursor+=12+length
+            self.assertEqual(cursor,len(content))
 
     def test_showcase_contains_identical_bundle_and_five_examples(self):
         tree = ElementTree.parse(build.ROOT / "dist/MattLib-Showcase.rbxlx")

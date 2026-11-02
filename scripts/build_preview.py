@@ -16,7 +16,7 @@ def preview():
         'return runGallery(MattLib)\n')
     metadata={'bundle_sha256':manifest['bundle_sha256'],'preview_sha256':hashlib.sha256(source.encode()).hexdigest(),
         'bytes':len(source.encode()),'entrypoint':'Preview.lua','required_code_downloads_inside_preview':0,
-        'optional_wallpaper_requests_on_cache_miss':1}
+        'optional_wallpaper_requests_per_design_on_cache_miss':1,'wallpaper_designs':4}
     return source,metadata
 
 def main():

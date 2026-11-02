@@ -188,6 +188,32 @@ return function(Library)
 		end,debug.traceback)
 		demo.Destroy(); if not ok then error(err,0) end
 	end)
+	test("native shared UI avoids CanvasGroup text rasterization",function(lib,UI)
+		local root=UI.mount(UI.h("Window",{},UI.h("Tabs",{items={{id="main",title="Main",content=UI.h("Section",{title="Native resolution"},UI.h("Text",{name="native-sharp-text",text="Directly rendered text"}))}}})))
+		UI.mount(UI.h("Modal",{title="Native dialog"},UI.h("Text",{text="Native dialog text"})))
+		lib:Notify({title="Native notification",message="No flattened text"})
+		for _=1,3 do RunService.Heartbeat:Wait(); lib:Flush() end
+		for _,instance in lib._env.runtime.screen:GetDescendants() do assert(not instance:IsA("CanvasGroup"),"Unexpected text-flattening layer: "..instance:GetFullName()) end
+		equal(root:Find("native-sharp-text").TextTransparency,0)
+	end)
+	test("native direct fades restore text and stroke transparency",function(lib,UI)
+		lib:SetReducedMotion(false)
+		local root=UI.mount(UI.h("Section",{name="native-fade",title="Native fade"},UI.h("Text",{name="native-fade-text",text="Crisp text"})))
+		task.wait(0.35); lib:Flush()
+		local frame,label=root:Find("native-fade"),root:Find("native-fade-text")
+		lib._env.animator:Fade(frame,0,0.05); task.wait(0.1); equal(label.TextTransparency,1)
+		lib._env.animator:Fade(frame,1,0.05); task.wait(0.1); equal(label.TextTransparency,0)
+		local stroke=frame:FindFirstChildOfClass("UIStroke"); assert(math.abs(stroke.Transparency-0.28)<0.001)
+		lib:SetReducedMotion(true); equal(lib:GetDiagnostics().tweens,0)
+	end)
+	test("native swatch leaves the hex text inset clear",function(lib,UI)
+		local root=UI.mount(UI.h("ColorPicker",{defaultValue=Color3.fromRGB(104,240,203)}))
+		for _=1,3 do RunService.Heartbeat:Wait(); lib:Flush() end
+		local swatch=root:Find("ColorSwatch"); local button=swatch.Parent
+		local textStart=button.AbsolutePosition.X+button:FindFirstChildOfClass("UIPadding").PaddingLeft.Offset
+		assert(swatch.AbsolutePosition.X>=button.AbsolutePosition.X,"Swatch is outside its button")
+		assert(swatch.AbsolutePosition.X+swatch.AbsoluteSize.X+4<=textStart,"Swatch overlaps hex text")
+	end)
 	test("native 360x640 constrained viewport layout",function(lib,UI)
 		local env=lib:_ensure()
 		for _,layer in env.runtime.layers do layer.Size=UDim2.fromOffset(360,640) end

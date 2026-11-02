@@ -547,18 +547,20 @@ test("facade supports responsive section columns and optional wallpaper",functio
 	tab:AddSection({Title="One"}):AddToggle({Title="Enabled",Default=true}); tab:AddSection({Title="Two"}):AddSlider({Title="Level"})
 	Mock.flush(); assert(window.root:Find("AdaptiveGrid")); eq(window.root:Find("WindowAtmosphere"),nil)
 end)
-test("textured wallpapers download once, use the cache and choose the correct tile",function()
+test("textured wallpapers load separate full-resolution files and reuse their caches",function()
 	local png="\137PNG\r\n\26\n\0\0\0\13IHDR"..string.char(0,0,6,0,0,0,4,0)..string.rep("\0",16)
 	local files,requests={},0
 	local capabilities={readfile=function(path) return files[path] end,writefile=function(path,data) files[path]=data end,makefolder=function() end,
-		getcustomasset=function(path) assert(files[path]==png); return "rbxasset://mattlib-wallpapers.png" end,
-		httpget=function(url) assert(string.find(url,"Cybersize/MattLib/main/assets/wallpapers-v1.png",1,true)); requests+=1; return png end}
+		getcustomasset=function(path) assert(files[path]==png); return "rbxasset://"..path end,
+		httpget=function(url) assert(string.find(url,"Cybersize/MattLib/main/assets/wallpapers/",1,true)); requests+=1; return png end}
 	local lib=new({capabilities=capabilities}); local UI=lib.UI
 	local root=UI.mount(UI.h("Wallpaper")); Mock.flush(); eq(lib:GetRuntimeInfo().wallpaper,"texture"); eq(requests,1)
-	eq(root:Find("Wallpaper"):GetAttribute("MattWallpaperMode"),"texture"); eq(root:Find("WallpaperImage").ImageRectSize,Vector2.new(768,512))
-	lib:SetDesign("Aura"); Mock.flush(); eq(root:Find("WallpaperImage").ImageRectOffset,Vector2.new(768,512)); eq(requests,1)
+	eq(root:Find("Wallpaper"):GetAttribute("MattWallpaperMode"),"texture"); eq(root:Find("WallpaperImage").ImageRectSize,Vector2.new())
+	assert(string.find(root:Find("WallpaperImage").Image,"mint-glass-v2.png",1,true))
+	lib:SetDesign("Aura"); Mock.flush(); assert(string.find(root:Find("WallpaperImage").Image,"aura-v2.png",1,true)); eq(requests,2)
+	lib:SetDesign("MintGlass"); Mock.flush(); eq(requests,2)
 	lib:Destroy()
-	local cached=new({capabilities=capabilities}); cached:Mount(cached.UI.h("Wallpaper")); Mock.flush(); eq(cached:GetRuntimeInfo().wallpaper,"texture"); eq(requests,1)
+	local cached=new({capabilities=capabilities}); cached:Mount(cached.UI.h("Wallpaper")); Mock.flush(); eq(cached:GetRuntimeInfo().wallpaper,"texture"); eq(requests,2)
 end)
 test("missing image adapters and failed downloads retain native wallpaper",function()
 	local requests=0
@@ -573,6 +575,50 @@ test("destroying before the deferred wallpaper fetch prevents network and disk w
 	local lib=new({capabilities={readfile=function() error("Fetch ran after destroy") end,writefile=function() error("Write ran after destroy") end,
 		getcustomasset=function() error("Asset ran after destroy") end,httpget=function() error("HTTP ran after destroy") end}})
 	lib:Mount(lib.UI.h("Wallpaper")); lib:Destroy(); Mock.flush(); eq(lib:GetDiagnostics().tweens,0)
+end)
+test("shared windows, tabs, sections, dialogs and notifications keep native text outside CanvasGroups",function()
+	local lib=new(); local UI=lib.UI
+	local root=UI.mount(UI.h("Window",{},UI.h("Tabs",{items={{id="main",title="Main",content=UI.h("Section",{title="Sharp text"},UI.h("Text",{name="sharp-text",text="Native pixels"}))}}})))
+	UI.mount(UI.h("Modal",{title="Dialog"},UI.h("Text",{text="Dialog text"})))
+	lib:Notify({title="Notification",message="Native text"}); Mock.flush()
+	for _,instance in lib._env.runtime.screen:GetDescendants() do assert(instance.ClassName~="CanvasGroup","Shared UI must not flatten text into a texture") end
+	eq(root:Find("sharp-text").TextTransparency,0)
+end)
+test("native fades preserve declared transparency through interruption and replay",function()
+	local lib=new({reducedMotion=false}); local UI=lib.UI
+	local function view(alpha)
+		return UI.h("Frame",{name="fade-root",style={height=120,background="$surface",backgroundTransparency=alpha,borderWidth=1,borderTransparency=0.35}}, {
+			UI.h("Text",{name="fade-text",text="Sharp",style={opacity=0.6}}),
+			UI.h("@ImageLabel",{name="fade-image",style={width=40,height=40,imageTransparency=0.25}}),
+		})
+	end
+	local root=UI.mount(view(0.27)); local animator=lib._env.animator
+	local frame,label,picture=root:Find("fade-root"),root:Find("fade-text"),root:Find("fade-image")
+	local function near(a,b) assert(math.abs(a-b)<0.00001,tostring(a).." ~= "..tostring(b)) end
+	local cancel=animator:Fade(frame,1,1,{from=0}); eq(label.TextTransparency,1); eq(picture.ImageTransparency,1)
+	animator:Fade(frame,0,0.2); cancel(); Mock.advance(0.3); eq(label.TextTransparency,1)
+	root:Update(view(0.7)):Flush(); animator:Fade(frame,1,0.2,{from=0}); Mock.advance(0.3)
+	near(frame.BackgroundTransparency,0.7); near(label.TextTransparency,0.4); near(picture.ImageTransparency,0.25)
+	near(frame:FindFirstChildOfClass("UIStroke").Transparency,0.35)
+	animator:Fade(frame,0,1); lib:SetReducedMotion(true); eq(label.TextTransparency,1)
+	animator:Fade(frame,1,1); near(label.TextTransparency,0.4); eq(lib:GetDiagnostics().tweens,0)
+end)
+test("legacy atlas clipping isolates every quadrant without ImageRect cropping",function()
+	local lib=new({wallpaperImage="rbxasset://legacy-atlas.png"}); local UI=lib.UI
+	local root=UI.mount(UI.h("Frame",{style={width=600,height=400}},UI.h("Wallpaper"))); Mock.flush()
+	for _,entry in {{"MintGlass",0,0},{"Ember",-600,0},{"Vector",0,-400},{"Aura",-600,-400}} do
+		lib:SetDesign(entry[1]); Mock.flush(); local image=root:Find("WallpaperImage")
+		eq(image.ScaleType,Enum.ScaleType.Stretch); eq(image.ImageRectSize,Vector2.new()); eq(image.ImageRectOffset,Vector2.new())
+		eq(image.AbsoluteSize,Vector2.new(1200,800)); eq(image.Position,UDim2.fromOffset(entry[2],entry[3]))
+	end
+end)
+test("texture downloads start only when a visible-strength wallpaper is requested",function()
+	local reads=0
+	local lib=new({capabilities={readfile=function() reads+=1; return nil end,writefile=function() end,getcustomasset=function() return "asset" end,httpget=function() return "bad" end}})
+	local UI=lib.UI
+	UI.mount(UI.h("Button",{text="No wallpaper"})); UI.mount(UI.h("Window",{wallpaper=false})); Mock.flush(); eq(reads,0)
+	lib:SetEffectIntensity(0); UI.mount(UI.h("Wallpaper")); Mock.flush(); eq(reads,0)
+	lib:SetEffectIntensity(1); Mock.flush(); eq(reads,1)
 end)
 test("reduced motion completes and prevents hover tweens",function()
 	local lib=new({reducedMotion=false}); local UI=lib.UI
@@ -603,10 +649,11 @@ test("inactive tab state survives animated design and tab transitions",function(
 	local root=UI.mount(UI.h(Pages)); Mock.flush(); local control=root:Find("tab-value")
 	select("two"); Mock.flush(); lib:SetDesign("Aura"); Mock.flush(); select("one"); Mock.flush(); eq(root:Find("tab-value"),control); eq(control:GetAttribute("AsterValue"),"true")
 end)
-test("staggered reveal timers and tweens cancel on unmount",function()
+test("staggered native reveal timers and tweens cancel on unmount",function()
 	local lib=new({reducedMotion=false}); local UI=lib.UI
-	local root=UI.mount(UI.h("Reveal",{name="delayed",delay=0.3},UI.h("Text",{text="Later"})))
-	eq(root:Find("delayed").GroupTransparency,1); root:Unmount(); Mock.advance(1); eq(lib:GetDiagnostics().tweens,0)
+	local root=UI.mount(UI.h("Reveal",{name="delayed",delay=0.3},UI.h("Text",{name="later",text="Later"})))
+	eq(root:Find("delayed").ClassName,"Frame"); eq(root:Find("later").TextTransparency,1)
+	root:Unmount(); Mock.advance(1); eq(lib:GetDiagnostics().tweens,0)
 end)
 test("design picker uses the shared live application design",function()
 	local lib=new(); local UI=lib.UI; local root=UI.mount(UI.h("DesignPicker",{presentation="segments"})); Mock.flush()

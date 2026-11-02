@@ -1,9 +1,9 @@
 {
   "tool": "Native Roblox Studio Play client",
   "engine_version": "0.745.0.7451137",
-  "version": "1.2.0",
-  "timestamp_utc": "2026-11-02T03:57:38.202Z",
-  "passed": 23,
+  "version": "1.2.1",
+  "timestamp_utc": "2026-11-02T04:27:51.017Z",
+  "passed": 26,
   "failed": 0,
   "viewport": {
     "y": 675,
@@ -99,6 +99,18 @@
       "passed": true
     },
     {
+      "name": "native shared UI avoids CanvasGroup text rasterization",
+      "passed": true
+    },
+    {
+      "name": "native direct fades restore text and stroke transparency",
+      "passed": true
+    },
+    {
+      "name": "native swatch leaves the hex text inset clear",
+      "passed": true
+    },
+    {
       "name": "native 360x640 constrained viewport layout",
       "passed": true
     }
@@ -124,7 +136,7 @@
     },
     "contentWidth": 582
   },
-  "bundle_sha256": "8bfc023b8e13bbaf836c6415213ece31092ec46faaeb9ec1c762831dd5cf25a0",
+  "bundle_sha256": "d3c0a70f5c53fe09b19d7dfad9bfba9756db39de33a1fea67946122f52d9a721",
   "native_source_matches_distribution": true,
   "native_gallery_matches_preview": true,
   "scope": "Native property, layout, movement, visibility, lifecycle and configuration tests; no live executor or screenshot visual acceptance claim"

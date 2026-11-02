@@ -1,12 +1,21 @@
 # Wallpaper artwork
 
-[wallpapers-v1.png](wallpapers-v1.png) is the selected production wallpaper atlas, generated with the built-in imagegen tool from the four approved design concepts. It contains artwork only; runtime text, controls, panels and chrome are native Roblox GUI objects.
+The production wallpapers for 1.2.1 are four separate 1536x1024 images, generated with the built-in imagegen tool. Each contains only one design. Runtime text, controls, panels and chrome are native Roblox GUI objects.
 
-The PNG is 1536x1024. Its exact 768x512 tiles are MintGlass at (0,0), Ember at (768,0), Vector at (0,512), and Aura at (768,512). The executor adapter caches this PNG and selects the correct tile with ImageRectOffset/ImageRectSize. Custom per-window images use their full image instead. A square variant was explored but is not used by the runtime.
+| Design | Production image |
+| --- | --- |
+| MintGlass | [mint-glass-v2.png](wallpapers/mint-glass-v2.png) |
+| Ember | [ember-v2.png](wallpapers/ember-v2.png) |
+| Vector | [vector-v2.png](wallpapers/vector-v2.png) |
+| Aura | [aura-v2.png](wallpapers/aura-v2.png) |
+
+The exact production prompt set is saved in [wallpapers/prompts.json](wallpapers/prompts.json). The previous atlas was the style reference. Files are cached separately and loaded only when their design is requested. Default wallpaper strength is lower than the artwork files themselves so controls stay legible.
+
+[wallpapers-v1.png](wallpapers-v1.png) is retained as a historical reference and optional legacy atlas. It is no longer downloaded automatically. It is 1536x1024 with 768x512 tiles: MintGlass at (0,0), Ember at (768,0), Vector at (0,512), and Aura at (768,512). Legacy custom atlases use geometric clipping; the default runtime does not use sprite cropping.
 
 The textured wallpaper pans slowly and has a separate moving light layer. It is not a video, shader, or simulation of cloth. Without an image adapter, the runtime uses native curved gradient strips or a native grid. The proposal UI images in docs/concepts are visual references, not screenshots of the implementation.
 
-## Final generation prompt
+## Historical atlas generation prompt
 
 Tool: built-in imagegen. References, in order: docs/concepts/mint-glass.png, ember.png, vector.png, aura.png. Transparent background: false.
 

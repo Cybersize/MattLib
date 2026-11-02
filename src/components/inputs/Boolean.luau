@@ -13,6 +13,8 @@ local function control(p,kind)
 	local controls=theme.control
 	local width,height,thumb=controls.switchWidth,controls.switchHeight,controls.thumbSize
 	local inset=(height-thumb)/2
+	local function ratio(deep,base) return if base<=0 then 1 else math.clamp(deep/base,0,1) end
+	local shade=Color3.new(ratio(theme.accentDeep.R,theme.accent.R),ratio(theme.accentDeep.G,theme.accent.G),ratio(theme.accentDeep.B,theme.accent.B))
 	return h("Button",{name=p.name,ref=p.ref,text="",disabled=p.disabled,variant="ghost",onClick=function() setValue(not value) end,
 		role=kind,accessibleName=p.accessibleName or p.label or kind,accessibleValue=tostring(value),
 		style=Style.merge({height=if p.description then controls.rowHeight+14 else controls.rowHeight,paddingX=0,scale=1,radius=0,
@@ -24,7 +26,7 @@ local function control(p,kind)
 		h("Frame",{style={width=if checkbox then height else width,height=height,position=UDim2.new(1,-4,0.5,0),anchor=Vector2.new(1,0.5),
 			background=if p.disabled then "$disabled" elseif value then "$accent" else "$input",backgroundTransparency=0,
 			radius=if checkbox then "$radius.sm" else controls.switchRadius,borderWidth=1,borderColor=if value then "$accent" else "$border",
-			gradient=if value and theme.effects.gradient>0 then {from="$accent",to="$accentDeep",rotation=90} else false}}, {
+			gradient=if value and theme.effects.gradient>0 then {from=Color3.new(1,1,1),to=shade,rotation=90} else false}}, {
 			if checkbox then h("Text",{text=if value then "✓" else "",style={width="100%",height="100%",textAlign="center",color="$accentText",textSize=18}})
 			else h("Frame",{motion=true,style={width=thumb,height=thumb,position=UDim2.new(0,if value then width-thumb-inset else inset,0.5,0),anchor=Vector2.new(0,0.5),
 				background=if value then "$text" else "$muted",backgroundTransparency=0,radius="$radius.pill"}}),

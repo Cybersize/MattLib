@@ -1,6 +1,6 @@
 # Four selectable designs
 
-MattLib 1.2 includes **MintGlass**, **Ember**, **Vector**, and **Aura**. These presets change the palette, window chrome, navigation layout, control density, corner shapes, section treatment, wallpaper, effects and motion timing. They use the same renderer/components; changing a design retains window geometry, selected tabs, controlled values and local component state.
+MattLib 1.2.1 includes **MintGlass**, **Ember**, **Vector**, and **Aura**. These presets change the palette, window chrome, navigation layout, control density, corner shapes, section treatment, wallpaper, effects and motion timing. They use the same renderer/components; changing a design retains window geometry, selected tabs, controlled values and local component state.
 
 | API name | Look and navigation | Controls / motion |
 | --- | --- | --- |
@@ -11,7 +11,9 @@ MattLib 1.2 includes **MintGlass**, **Ember**, **Vector**, and **Aura**. These p
 
 Sidebar/tree navigation becomes horizontal when its own container is below 640px, even on a large monitor. At widths below 900px the sidebar uses 148px; wider layouts use at most 176px. Horizontal navigation scrolls when needed. The control gallery uses two columns whenever its content area can fit two 230px cards and a 12px gap. Resizing retains the same keyed input instances and values.
 
-Every design has animated background artwork: mint ribbons, an orange sweep, cobalt grid lighting or lavender waves. Supported executors load the generated [wallpaper atlas](../assets/wallpapers-v1.png) once and cache it. Native gradients and curved strips provide a fallback in Studio and environments without image capabilities. All controls, text and layouts remain native instances. Panel translucency and layered borders approximate glass/glow; live scene blur and exact concept-image fidelity are not claimed.
+Every design has animated background artwork: mint ribbons, an orange sweep, cobalt grid lighting or lavender waves. Supported executors lazily load a separate [1536x1024 image for each design](../assets/README.md) and cache it. The default artwork uses no atlas or ImageRect cropping. Native gradients and curved strips provide a fallback in Studio and environments without image capabilities. All controls, text and layouts remain native instances. Panel translucency and layered borders approximate glass/glow; live scene blur and exact concept-image fidelity are not claimed.
+
+Shared windows, tabs, sections, dialogs, popovers and toasts use Frames and direct per-object opacity tweens. Their text is not flattened into CanvasGroup textures. Roblox documents that [CanvasGroup texture quality depends on client quality level](https://create.roblox.com/docs/reference/engine/classes/CanvasGroup); eliminating those nested compositing layers addresses the reported soft text without requiring a graphics-setting change. Explicit user-authored native CanvasGroups remain supported.
 
 Original visual references: [Mint Glass](concepts/mint-glass.png), [Ember](concepts/ember.png), [Vector](concepts/vector.png), [Aura](concepts/aura.png). These are proposal images, not screenshots of the running library.
 
@@ -87,23 +89,25 @@ Wallpaper uses at most two repeating TweenService animations per visible wallpap
 ```lua
 local window=MattLib:CreateWindow({
     Title="My UI", Design="MintGlass",
-    Wallpaper={Speed=1,Opacity=0.85}, -- or false to remove the wallpaper
+    Wallpaper={Speed=1,Opacity=0.3}, -- or false to remove the wallpaper
 })
 local tab=window:AddTab({Title="Main",Icon="controls",Columns=2,MinColumnWidth=240,Gap=12})
 tab:AddSection({Title="General"}):AddToggle({Title="Enabled",Default=true})
 tab:AddSection({Title="Output"}):AddSlider({Title="Volume",Default=64})
 ```
 
-`Wallpaper` accepts `Speed` (>0, up to 4), `Opacity` (0..1), `Motion=false`, and optional `Image` (an ordinary Roblox image URI or numeric asset id). Custom images are gently panned with a separate light layer. Studio applications can supply a published image using `Wallpaper={Image="rbxassetid://YOUR_IMAGE_ID"}`. No custom-asset APIs or HTTP security changes are required for the native fallback.
+`Wallpaper` accepts `Speed` (>0, up to 4), `Opacity` (0..1), `Motion=false`, and optional `Image` (an ordinary Roblox image URI or numeric asset id). Default window opacity is 0.32 for MintGlass, 0.16 for Ember, 0.22 for Vector and 0.30 for Aura; effect intensity multiplies that value. Custom images are gently panned with a separate light layer. Standalone Wallpaper components default to opacity 1 for artwork previews. Studio applications can supply a published image using `Wallpaper={Image="rbxassetid://YOUR_IMAGE_ID"}`. No custom-asset APIs or HTTP security changes are required for the native fallback.
 
 Executor texture loading requires `getcustomasset` (or `getsynasset`), `readfile`, `writefile`, and a working HTTP adapter. `makefolder` is used when present. Explicit capability overrides can provide `httpget`, `request` or `http_request`. `MattLib.new({wallpaperAssets=false})` disables texture loading. `app:GetRuntimeInfo()` exposes `wallpaper` (`native`, `loading`, `texture`) and an optional `wallpaperError`; an image-adapter failure does not prevent the GUI from mounting. No remote source code is fetched by the framework.
 
-For a complete atlas already available as a content URI, `MattLib.new({wallpaperImage=uri})` selects the bundled atlas layout (1536x1024, four 768x512 tiles). Keep those dimensions when importing; a separately resized or cropped image should instead use the per-window `Wallpaper.Image` option.
+To supply application-wide individual images, use `MattLib.new({wallpaperImages={MintGlass=mintUri,Ember=emberUri,Vector=vectorUri,Aura=auraUri}})`. Only supplied entries are overridden. To use a custom image for one window, use `Wallpaper.Image`.
+
+Legacy `MattLib.new({wallpaperImage=uri})` remains available for an existing 2x2 atlas with 3:2 tiles. It clips an oversized image by geometry rather than combining ImageRect cropping with Crop scaling. The atlas stays stationary and its light layer animates, preventing neighboring tiles from entering the viewport during a pan. New automatically downloaded art never uses this path.
 
 Declarative equivalents:
 
 ```lua
-UI.h("Window",{wallpaper={Speed=1,Opacity=0.9}},children)
+UI.h("Window",{wallpaper={Speed=1,Opacity=0.3}},children)
 UI.h("AdaptiveGrid",{columns=2,minColumnWidth=240,gap=12},sections)
 UI.h("Wallpaper",{image="rbxassetid://YOUR_IMAGE_ID",speed=0.7,opacity=0.8,style={height=160}})
 UI.h("Icon",{symbol="controls",size=20,color="$accent"})

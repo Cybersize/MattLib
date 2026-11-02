@@ -20,7 +20,8 @@ function ColorPicker.ColorPicker(p)
 		p.label and h("Text",{text=p.label,style={font="$typography.medium",textSize=13}}) or false,
 		h("Button",{ref=anchor,text=hex(value),disabled=p.disabled,onClick=function() setOpen(not open) end,
 			accessibleName=p.accessibleName or p.label or "Choose color",style={textAlign="left",paddingX=42}}, {
-			h("Frame",{style={width=22,height=22,position=UDim2.new(0,10,0.5,0),anchor=Vector2.new(0,0.5),radius=4,background=value,backgroundTransparency=0}}),
+			-- The button's 42px UIPadding also offsets children; leave the hex text unobstructed.
+			h("Frame",{name="ColorSwatch",style={width=22,height=22,position=UDim2.new(0,-30,0.5,0),anchor=Vector2.new(0,0.5),radius=4,background=value,backgroundTransparency=0}}),
 		}),
 		h("Popover",{anchor=anchor,open=open and not p.disabled,onOpenChange=setOpen,width=290}, {
 			h("Text",{text="Color channels",style={font="$typography.medium"}}),

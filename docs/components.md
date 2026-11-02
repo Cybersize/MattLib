@@ -20,13 +20,13 @@ Interactive inputs accept `disabled`, `value`, `defaultValue`, `onChange(value)`
 | `Separator` | One-pixel semantic border line. Override width/height/position via style. |
 | `Section` | Surface, border, rounded padding and vertical content. `title?`, `description?`, `style`, children. |
 | `Collapsible`, `CollapsibleSection` | Same section behavior with an accessible disclosure button. `title`, `open?`, `defaultOpen=false`, `onOpenChange(boolean)`, `disabled`. Measures content and tweens clipped body height. Children retain state while closed. |
-| `Window` | See window properties below. Owns a draggable/resizable native CanvasGroup and header controls. Children fill its content area; put scrolling/navigation inside. |
+| `Window` | See window properties below. Owns native Frames and header controls; text renders directly. Children fill its content area; put scrolling/navigation inside. |
 | `Tabs` | `items={{id,title,content,disabled?,icon?},...}` or direct `Tab` children. `value?`, `defaultValue?`, `onChange(id)`, `orientation="design"|"top"|"sidebar"`, optional sidebarWidth/tabWidth/padding, `unmountInactive=false`. Sidebar follows the actual container width and becomes top navigation below 640px. Panels scroll. Icon names use the built-in line symbols. |
 | `Tab` | Metadata consumed by its direct Tabs/Sidebar parent: `id`, `title`, `disabled`, children. Rendering it outside Tabs is an error. |
 | `Sidebar` | Tabs with sidebar orientation. Same selection and item/child properties. |
 | `DesignPicker` | Selects MintGlass/Ember/Vector/Aura. Default dropdown or `presentation="segments"`; name, label, value, onChange, disabled, style. Without onChange it calls the owning application's SetDesign. |
-| `Reveal` | Native CanvasGroup entrance with opacity/scale. order=0, delay?, replayKey?, name/style; skips delayed motion when reduced motion is enabled. |
-| `Wallpaper` | Full-size animated artwork; optional `image`, `speed=1` (>0, <=4), `opacity=1` (0..1), `motion=false`, `active=false`, name/style. Uses a cached atlas when available, otherwise native ribbons/grid. Pauses while hidden or reduced motion is enabled. Set an explicit height in flow layouts. See [designs.md](designs.md). |
+| `Reveal` | Native Frame entrance with direct object opacity/scale tweens. order=0, delay?, replayKey?, name/style; skips delayed motion when reduced motion is enabled. |
+| `Wallpaper` | Full-size animated artwork; optional `image`, `speed=1` (>0, <=4), `opacity=1` (0..1), `motion=false`, `active=false`, name/style. Lazily loads the selected design's individual image when supported, otherwise uses native ribbons/grid. Pauses while hidden or reduced motion is enabled. Set an explicit height in flow layouts. See [designs.md](designs.md). |
 
 Inactive panels remain mounted and preserve local state. Set `unmountInactive=true` for expensive pages that should release resources when inactive. Disabled tabs cannot be activated through their buttons; the application should choose an enabled default/controlled value. An unavailable selected id falls back to the first item visually.
 
@@ -53,7 +53,7 @@ UI.h("Tabs", { defaultValue = "settings" }, {
 | `defaultVisible` | true. Show/Hide are window-handle operations. Hidden windows get a scrollable restore tray for touch users. |
 | `theme` | Optional `"Dark"`, `"Light"`, custom token table, or Theme service. Omitted inherits the application's live theme. |
 | `design` | Optional MintGlass, Ember, Vector or Aura scoped override. Omitted follows the application. See [designs.md](designs.md). |
-| `wallpaper` | Defaults to animated design artwork. `false` removes it. Table options: `Image?`, `Speed=1`, `Opacity=1`, `Motion=false` for a static image/artwork. |
+| `wallpaper` | Defaults to quiet animated design artwork. `false` removes it. Table options: `Image?`, `Speed=1`, `Opacity=0..1` (default depends on design), `Motion=false` for static artwork. |
 | `windowRef` | Table receiving the managed window handle in `.current`, later nil. This differs from a native host ref. |
 | `onReady(handle)` | Called after native refs are committed and the manager registers the window. |
 | `onMove(rect)` / `onResize(rect)` | Called on successful pointer gesture completion. Rect has x,y,width,height. |

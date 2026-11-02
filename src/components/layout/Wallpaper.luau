@@ -58,9 +58,10 @@ end
 function Wallpaper.Wallpaper(p)
 	local env=Hooks.useEnvironment()
 	local theme=Hooks.useTheme()
-	local texture=Hooks.useSignal(env.runtime.wallpaper.signal)
-	local image=p.image or texture
-	local atlas=p.image==nil and texture~=nil
+	Hooks.useSignal(env.runtime.wallpaper.signal)
+	local texture=env.runtime.wallpaper:Get(theme.design.name)
+	local image=p.image or (texture and texture.uri)
+	local atlas=p.image==nil and texture~=nil and texture.atlas
 	local ref,first,second=Hooks.useRef(nil),Hooks.useRef(nil),Hooks.useRef(nil)
 	local size,setSize=Hooks.useState(Vector2.new(800,500))
 	local speed=p.speed or 1
@@ -68,6 +69,9 @@ function Wallpaper.Wallpaper(p)
 	assert(type(speed)=="number" and speed>0 and speed<=4,"Wallpaper speed must be > 0 and <= 4")
 	assert(type(opacity)=="number" and opacity>=0 and opacity<=1,"Wallpaper opacity must be 0..1")
 	local intensity=theme.effects.intensity*opacity
+	Hooks.useEffect(function()
+		if p.image==nil and intensity>0 then env.runtime.wallpaper:Load(theme.design.name) end
+	end,{theme.design.name,p.image,intensity})
 	Hooks.useEffect(function()
 		local function measure()
 			local nextSize=ref.current.AbsoluteSize
@@ -94,8 +98,9 @@ function Wallpaper.Wallpaper(p)
 			end
 			ref.current:SetAttribute("MattWallpaperAnimated",running)
 			if not running then return end
+			if atlas and first.current then first.current.Position=UDim2.new(); first.current.Rotation=0 end
 			for index,layer in {first.current,second.current} do
-				if layer then
+				if layer and not (atlas and index==1) then
 					layer.Position=UDim2.new(); layer.Rotation=0
 					local direction=if index==1 then 1 else -1
 					motion:Add(env.animator:To(layer,{Position=UDim2.fromOffset(direction*18,-direction*12),Rotation=direction*2},(if index==1 then 12 else 17)/speed,
@@ -107,16 +112,22 @@ function Wallpaper.Wallpaper(p)
 		scope:Add(env.animator.motion:subscribe(refresh))
 		refresh()
 		return function() motion:Destroy(); scope:Destroy() end
-	end,{theme.design.name,intensity,p.active,p.motion,speed,image})
+	end,{theme.design.name,intensity,p.active,p.motion,speed,image,atlas})
 	local artwork={}
 	if intensity>0 then
 		if image then
 			assert(type(image)=="string" or type(image)=="number","Wallpaper image must be an asset URI or id")
-			local tile=if theme.design.name=="Ember" then Vector2.new(768,0) elseif theme.design.name=="Vector" then Vector2.new(0,512) elseif theme.design.name=="Aura" then Vector2.new(768,512) else Vector2.new()
+			-- Crop legacy atlases with geometry; new files each contain one full-resolution design.
+			local column=if theme.design.name=="Ember" or theme.design.name=="Aura" then 1 else 0
+			local row=if theme.design.name=="Vector" or theme.design.name=="Aura" then 1 else 0
+			local coverWidth=math.max(size.X,size.Y*1.5)
+			local coverHeight=math.max(size.Y,size.X/1.5)
 			table.insert(artwork,h("Frame",{key="image",ref=first,motion=false,style={width="100%",height="100%"}},
-				h("@ImageLabel",{name="WallpaperImage",native={Image=if type(image)=="number" then "rbxassetid://"..image else image,ScaleType=Enum.ScaleType.Crop,
-					ImageRectOffset=if atlas then tile else Vector2.new(),ImageRectSize=if atlas then Vector2.new(768,512) else Vector2.new()},
-					style={width="112%",height="112%",position=UDim2.fromScale(-0.06,-0.06),backgroundTransparency=1,imageTransparency=1-intensity}})))
+				h("@ImageLabel",{name="WallpaperImage",native={Image=if type(image)=="number" then "rbxassetid://"..image else image,
+					ScaleType=if atlas then Enum.ScaleType.Stretch else Enum.ScaleType.Crop,ResampleMode=Enum.ResamplerMode.Default},
+					style={width=if atlas then coverWidth*2 else "108%",height=if atlas then coverHeight*2 else "108%",
+						position=if atlas then UDim2.fromOffset((size.X-coverWidth)/2-column*coverWidth,(size.Y-coverHeight)/2-row*coverHeight) else UDim2.fromScale(-0.04,-0.04),
+						backgroundTransparency=1,imageTransparency=1-intensity}})))
 			table.insert(artwork,h("Frame",{key="light",ref=second,name="WallpaperLight",motion=false,style={width="100%",height="100%"}},
 				h("Frame",{style={width="70%",height="140%",position=UDim2.fromScale(0.48,-0.1),rotation=24,background=white,backgroundTransparency=1-0.08*intensity,
 					gradient={from="$accent",to="$background",rotation=0,transparency={0.7,1}}}})))

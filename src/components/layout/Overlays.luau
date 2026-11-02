@@ -11,11 +11,12 @@ local function fade(ref, open, present)
 	local mounted=Hooks.useRef(false)
 	Hooks.useEffect(function()
 		if not present or not ref.current then mounted.current=false; return end
-		if not mounted.current then ref.current.GroupTransparency=1; mounted.current=true end
+		local entering=not mounted.current
+		mounted.current=true
 		local scope=Scope.new()
 		local scale=ref.current:FindFirstChildOfClass("UIScale")
 		if scale and open then scale.Scale=0.97 end
-		scope:Add(env.animator:To(ref.current,{GroupTransparency=if open then 0 else 1},env.theme:Get().motion.normal))
+		scope:Add(env.animator:Fade(ref.current,if open then 1 else 0,env.theme:Get().motion.normal,{from=if entering then 0 else nil}))
 		if scale then scope:Add(env.animator:To(scale,{Scale=if open then 1 else 0.97},env.theme:Get().motion.normal)) end
 		return function() scope:Destroy() end
 	end,{open,present})
@@ -43,7 +44,7 @@ function Overlays.Modal(p)
 		return env.overlays:Attach(panel.current,function() latest.current() end,true,nil,z)
 	end,{present,open})
 	if not present then return nil end
-	return Element.portal(h("@CanvasGroup",{ref=group,name=p.name or "Modal",style={width="100%",height="100%",zIndex=z}}, {
+	return Element.portal(h("@Frame",{ref=group,name=p.name or "Modal",style={width="100%",height="100%",zIndex=z}}, {
 		h("@TextButton",{name="ModalBackdrop",native={Text="",Modal=true,Active=true},style={width="100%",height="100%",background="$overlay",backgroundTransparency=0.35},
 			events={Activated=function() latest.current() end}}),
 		h("Column",{ref=panel,style=Style.merge({width=UDim.new(1,-32),maxWidth=p.width or 440,height="auto",maxHeight=math.max(1,viewport.Y-16),
@@ -112,7 +113,7 @@ function Overlays.Popover(p)
 		return env.overlays:Attach(panel.current,function() latest.current() end,false,p.anchor and p.anchor.current,z)
 	end,{present,open,p.anchor})
 	if not present then return nil end
-	return Element.portal(h("@CanvasGroup",{ref=panel,name=p.name or "Popover",style=Style.merge({width=rect.width,height=if p.scrollable==false then "auto" else math.max(1,math.min(contentHeight,rect.maxHeight-16))+16,maxHeight=rect.maxHeight,
+	return Element.portal(h("@Frame",{ref=panel,name=p.name or "Popover",style=Style.merge({width=rect.width,height=if p.scrollable==false then "auto" else math.max(1,math.min(contentHeight,rect.maxHeight-16))+16,maxHeight=rect.maxHeight,
 		position=UDim2.fromOffset(rect.x,rect.y),background="$raised",backgroundTransparency=0,borderWidth=1,borderColor="$border",
 		radius="$radius.md",padding="$spacing.sm",direction="column",gap="$spacing.xs",zIndex=z,overflow="hidden",scale=1},p.style)},
 		if p.scrollable==false then p.children else {h("ScrollArea",{contentRef=content,style={height=math.max(1,math.min(contentHeight,rect.maxHeight-16))},contentStyle={gap=4}},p.children)}),env.runtime.layers.overlay)

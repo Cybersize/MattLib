@@ -14,12 +14,12 @@ local function Panel(p)
 	Hooks.useEffect(function()
 		if not present then return end
 		local scope=Scope.new()
-		if p.active then ref.current.GroupTransparency=1; content.current.Position=UDim2.fromOffset(theme.motion.distance,0) end
-		scope:Add(env.animator:To(ref.current,{GroupTransparency=if p.active then 0 else 1},theme.motion.tab,{channel="tab"}))
+		if p.active then content.current.Position=UDim2.fromOffset(theme.motion.distance,0) end
+		scope:Add(env.animator:Fade(ref.current,if p.active then 1 else 0,theme.motion.tab,{from=if p.active then 0 else nil}))
 		scope:Add(env.animator:To(content.current,{Position=UDim2.fromOffset(if p.active then 0 else -theme.motion.distance,0)},theme.motion.tab,{channel="tab"}))
 		return function() scope:Destroy() end
 	end,{p.active,present,theme.design.name})
-	return h("@CanvasGroup",{ref=ref,motion=false,attributes={MattTab=p.id,MattActive=p.active},style={width="100%",height="100%",visible=present,zIndex=if p.active then 3 else 2}}, {
+	return h("@Frame",{ref=ref,motion=false,attributes={MattTab=p.id,MattActive=p.active},style={width="100%",height="100%",visible=present,zIndex=if p.active then 3 else 2,overflow="hidden"}}, {
 		h("Frame",{ref=content,style={width="100%",height="100%"}},p.children),
 	})
 end
@@ -124,7 +124,7 @@ function Tabs.Tabs(p)
 			h("Column",{name="NavigationFooter",style={height=footer,visible=side,width=UDim.new(1,-28),position=UDim2.new(0,14,1,-footer),gap=5,paddingY=10}}, {
 				h("Separator",{style={backgroundTransparency=0.5}}),
 				h("Text",{text="●  Local workspace",style={textSize=11,color="$muted"}}),
-				h("Text",{text=theme.design.label.."  /  v1.2",style={textSize=10,font=Enum.Font.Code,color="$subtle"}}),
+				h("Text",{text=theme.design.label.."  /  v1.2.1",style={textSize=10,font=Enum.Font.Code,color="$subtle"}}),
 			}),
 		}),
 		h("Frame",{name="TabPanels",style={width=if side then UDim.new(1,-width-8) else "100%",height=if side then "100%" else UDim.new(1,-height-inset),

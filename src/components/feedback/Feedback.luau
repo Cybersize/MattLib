@@ -76,8 +76,8 @@ function Feedback.Toast(p)
 		if not present or not ref.current then return end
 		local scope=Scope.new()
 		local scale=ref.current:FindFirstChildOfClass("UIScale")
-		if open then ref.current.GroupTransparency=1; if scale then scale.Scale=0.96 end end
-		scope:Add(env.animator:To(ref.current,{GroupTransparency=if open then 0 else 1},env.theme:Get().motion.normal))
+		if open and scale then scale.Scale=0.96 end
+		scope:Add(env.animator:Fade(ref.current,if open then 1 else 0,env.theme:Get().motion.normal,{from=if open then 0 else nil}))
 		if scale then scope:Add(env.animator:To(scale,{Scale=if open then 1 else 0.96},env.theme:Get().motion.normal)) end
 		return function() scope:Destroy() end
 	end,{open,present})
@@ -88,7 +88,7 @@ function Feedback.Toast(p)
 		end
 	end,{open,p.duration})
 	if not present then return nil end
-	return h("@CanvasGroup",{ref=ref,name=p.name or "Toast",role="status",accessibleName=(p.title or "Notification")..": "..(p.message or ""),
+	return h("@Frame",{ref=ref,name=p.name or "Toast",role="status",accessibleName=(p.title or "Notification")..": "..(p.message or ""),
 		style=Style.merge({width="100%",height="auto",scale=1,background="$surface",backgroundTransparency=0,borderWidth=1,borderColor="$border",
 			radius="$radius.lg",padding=14,direction="column",gap=8},p.style)}, {
 		h("Row",{}, {
