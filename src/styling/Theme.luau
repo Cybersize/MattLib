@@ -51,7 +51,15 @@ end
 function Theme.new(theme)
 	return setmetatable({ signal = Signal.new(Theme.resolve(theme or "Dark")) }, Theme)
 end
-function Theme:Set(theme) self.signal:set(Theme.resolve(theme)) end
+function Theme:Set(theme)
+	local resolved=Theme.resolve(theme)
+	if not (type(theme)=="table" and theme.design) then
+		local current=self:Get()
+		-- Palette changes retain the selected design's geometry, effects and motion.
+		for _,key in {"design","radius","spacing","motion","control","controlHeight","effects"} do resolved=merge(resolved,{[key]=current[key]}) end
+	end
+	self.signal:set(freeze(resolved))
+end
 function Theme:Get() return self.signal:get() end
 function Theme:Extend(overrides) self:Set(merge(self:Get(), overrides)) end
 function Theme:Destroy() self.signal:Destroy() end

@@ -13,6 +13,7 @@ return function(Library)
 		local counts=Library:GetDiagnostics()
 		for key,value in counts do if key~="renders" and value~=0 then ok=false; err=tostring(err).."; leaked "..key.."="..value end end
 		table.insert(reports,{name=name,passed=ok,error=if ok then nil else tostring(err)})
+		print("MATTLIB_STUDIO_CASE "..HttpService:JSONEncode(reports[#reports]))
 		print("MATTLIB_STUDIO_"..(if ok then "PASS " else "FAIL ")..name..(if ok then "" else ": "..tostring(err)))
 	end
 	test("functional updates preserve native instances",function(lib,UI)
@@ -97,6 +98,47 @@ return function(Library)
 		toggle:SetValue(true); lib:Flush(); equal(toggle:GetInstance(),native); equal(native:GetAttribute("AsterValue"),"true")
 		window:Destroy()
 	end)
+	test("all four native design layouts preserve state and instances",function(lib,UI)
+		local setCount
+		local function Page()
+			local count,set=UI.useState(0); setCount=set
+			return UI.h("Section",{title="Stable section"},UI.h("Button",{name="design-value",text=tostring(count),variant="primary"}))
+		end
+		local root=UI.mount(UI.h("Window",{id="designs"},UI.h("Tabs",{name="design-tabs",items={{id="one",title="One",content=UI.h(Page)},{id="two",title="Two"}}})))
+		RunService.Heartbeat:Wait(); RunService.Heartbeat:Wait(); lib:Flush()
+		local frame,button=root:Find("Window:designs"),root:Find("design-value")
+		setCount(7); root:Flush()
+		for _,name in lib.Designs do
+			lib:SetDesign(name); lib:Flush(); RunService.Heartbeat:Wait(); RunService.Heartbeat:Wait(); lib:Flush()
+			equal(root:Find("Window:designs"),frame); equal(root:Find("design-value"),button); equal(button.Text,"7"); equal(frame:GetAttribute("MattDesign"),name)
+			assert(root:Find("TabIndicator") and button:FindFirstChildOfClass("UIScale"))
+		end
+	end)
+	test("native glow gradient and scale modifiers cleanly change",function(lib,UI)
+		local root=UI.mount(UI.h("Button",{name="effects",text="Effects",variant="primary"})); local button=root:Find("effects")
+		assert(button:FindFirstChildOfClass("UIGradient") and button:FindFirstChildOfClass("UIScale") and button:FindFirstChild("Matt_halo"))
+		lib:SetEffectIntensity(0); lib:Flush(); equal(button:FindFirstChild("Matt_halo"),nil)
+		lib:SetDesign("Vector"); lib:Flush(); equal(root:Find("effects"),button)
+	end)
+	test("native per-window designs and minimized header sizes",function(lib)
+		local window=lib:CreateWindow({Id="scoped",Title="Scoped",Design="Ember"}); window:AddTab({Title="Main"}); lib:Flush()
+		local frame=window:GetInstance(); equal(frame:GetAttribute("MattDesign"),"Ember")
+		window:Minimize(); lib:Flush(); equal(window:GetRect().height,48)
+		window:SetDesign("Aura"); lib:Flush(); equal(window:GetInstance(),frame); equal(frame:GetAttribute("MattDesign"),"Aura"); equal(window:GetRect().height,54)
+		window:Restore(); lib:Flush(); window:Destroy()
+	end)
+	for _,design in {"MintGlass","Ember","Vector","Aura"} do
+		test("native gallery factory "..design,function()
+			local factory=require(game:GetService("ReplicatedStorage").AsterExamples.Gallery)
+			local demo=factory(Library,{design=design,reducedMotion=true})
+			local ok,err=xpcall(function()
+				RunService.Heartbeat:Wait(); RunService.Heartbeat:Wait(); demo.library:Flush()
+				assert(demo.root.alive and demo.root:Find("GalleryDesignPicker") and demo.root:Find("DesignTryButton"))
+				equal(demo.library:GetDesign(),design)
+			end,debug.traceback)
+			demo.Destroy(); if not ok then error(err,0) end
+		end)
+	end
 	test("native 360x640 constrained viewport layout",function(lib,UI)
 		local env=lib:_ensure()
 		for _,layer in env.runtime.layers do layer.Size=UDim2.fromOffset(360,640) end
@@ -117,5 +159,6 @@ return function(Library)
 	local passed=0; for _,report in reports do if report.passed then passed+=1 end end
 	local result={passed=passed,failed=#reports-passed,tests=reports,viewport={x=workspace.CurrentCamera.ViewportSize.X,y=workspace.CurrentCamera.ViewportSize.Y}}
 	print("MATTLIB_STUDIO_RESULTS "..HttpService:JSONEncode(result))
+	print("MATTLIB_STUDIO_SUMMARY "..HttpService:JSONEncode({passed=passed,failed=#reports-passed,version=Library.Version,viewport=result.viewport}))
 	return result
 end

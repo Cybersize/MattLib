@@ -40,7 +40,7 @@ function Manager:_publish()
 end
 function Entry:_apply()
 	if not self.alive then return end
-	local minSize=if self.minimized then Vector2.new(self.minSize.X,44) else self.minSize
+	local minSize=if self.minimized then Vector2.new(self.minSize.X,self.headerHeight) else self.minSize
 	self.rect=Manager.clamp(self.rect,self.manager:_viewport(),minSize,self.maxSize)
 	self.frame.Position=UDim2.fromOffset(self.rect.x,self.rect.y)
 	self.frame.Size=UDim2.fromOffset(self.rect.width,self.rect.height)
@@ -60,7 +60,7 @@ function Entry:Hide()
 end
 function Entry:Minimize()
 	if not self.alive or self.minimized then return end
-	self.savedHeight=self.rect.height; self.rect.height=44; self.minimized=true
+	self.savedHeight=self.rect.height; self.rect.height=self.headerHeight; self.minimized=true
 	self.options.onMinimized(true); self:_apply()
 end
 function Entry:Restore()
@@ -75,8 +75,14 @@ function Entry:SetSize(width,height)
 	assert(type(width)=="number" and width>0 and width<math.huge and type(height)=="number" and height>0 and height<math.huge,"Window size must be finite and positive")
 	if not self.alive then return end
 	self.rect.width=width
-	if self.minimized then self.savedHeight=height; self.rect.height=44 else self.rect.height=height end
+	if self.minimized then self.savedHeight=height; self.rect.height=self.headerHeight else self.rect.height=height end
 	self:_apply()
+end
+function Entry:SetTitleHeight(height)
+	assert(type(height)=="number" and height>=30 and height<=100,"Invalid window title height")
+	if not self.alive then return end
+	self.headerHeight=height
+	if self.minimized then self.rect.height=height; self:_apply() end
 end
 function Entry:GetRect() return table.clone(self.rect) end
 function Entry:Close()
@@ -102,7 +108,7 @@ function Manager:Register(options)
 	self.serial+=1
 	local entry=setmetatable({manager=self,id=options.id,options=options,scope=Scope.new(),alive=true,frame=options.frame,
 		visible=options.visible~=false,minimized=false,minSize=options.minSize or Vector2.new(280,180),maxSize=options.maxSize,
-		order=self.serial,rect={x=point[1],y=point[2],width=size[1],height=size[2]}},Entry)
+		order=self.serial,headerHeight=options.titleHeight or 44,rect={x=point[1],y=point[2],width=size[1],height=size[2]}},Entry)
 	self.entries[entry.id]=entry; Diagnostics.add("windows",1)
 	local cancelCapture
 	entry.scope:Add(function() if cancelCapture then cancelCapture(); cancelCapture=nil end end)

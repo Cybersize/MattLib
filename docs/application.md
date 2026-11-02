@@ -6,6 +6,7 @@
 local app = Library.new({
     id = "acme-settings", -- stable namespace; same id replaces its earlier ScreenGui
     theme = "Dark",
+    design = "MintGlass", -- MintGlass, Ember, Vector, Aura
     reducedMotion = false,
     displayOrder = 50,
     config = { folder = "AcmeSettings", version = 1 },
@@ -63,6 +64,8 @@ disconnect()
 ```
 
 CreateWindow accepts `Id`, `Title`, `Size`, `Position`, `MinSize`, `MaxSize`, `FixedSize`, `OpenKey`, `Theme`, `Navigation` ("Top" or "Sidebar"), and `OnClose`. Window handles expose `AddTab`, `Show`, `Hide`, `Minimize`, `Restore`, `Focus`, `SetSize`, `SetTheme`, `GetRect`, `GetInstance`, `Update`, `Destroy`, and `.Config` (the application Config service). Header close schedules full facade destruction after its transition. Explicit `window:Destroy()` immediately unmounts and releases the complete model/config tree.
+
+CreateWindow also accepts `Design="MintGlass"|"Ember"|"Vector"|"Aura"`; `window:SetDesign(name)` and `window:GetDesign()` manage a scoped design. Omitted Navigation uses the selected design's layout. Application methods `SetDesign`, `GetDesign`, `GetDesigns`, `SetEffectIntensity` and the immutable `.Designs` name list are documented in [designs.md](designs.md). Changing designs retains control state and geometry.
 
 Tabs and sections accept AddSection/AddCollapsible and the Add methods below. Tab controls render in its normal content Column; sections are optional. Container `Update` changes presentation. `Destroy` recursively removes the container and its descendants.
 

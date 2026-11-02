@@ -2,6 +2,8 @@
 
 Repository: [Cybersize/MattLib](https://github.com/Cybersize/MattLib).
 
+Version 1.1 includes MintGlass, Ember, Vector and Aura. The preview opens a live design chooser. Scripters can pass `Design="Ember"` to CreateWindow and call `window:SetDesign("Aura")` later. See [the design API](docs/designs.md).
+
 Full gallery preview:
 
 ```lua

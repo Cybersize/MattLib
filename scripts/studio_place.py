@@ -25,7 +25,7 @@ def main():
     item(storage,"ModuleScript","MattLib",bundle)
     item(storage,"ModuleScript","AsterSmoke",(ROOT/"tests/studio/Smoke.luau").read_text(encoding="utf-8"))
     examples=item(storage,"Folder","AsterExamples")
-    for name,folder in {"Gallery":"component-gallery","Dashboard":"complex-dashboard","Basic":"basic","Declarative":"declarative"}.items():
+    for name,folder in {"Gallery":"component-gallery","Dashboard":"complex-dashboard","Basic":"basic","Declarative":"declarative","Designs":"design-selection"}.items():
         item(examples,"ModuleScript",name,(ROOT/f"examples/{folder}/init.luau").read_text(encoding="utf-8"))
     player=item(root,"StarterPlayer","StarterPlayer")
     scripts=item(player,"StarterPlayerScripts","StarterPlayerScripts")

@@ -2,6 +2,8 @@
 
 A dependency-free, React-inspired Luau framework that renders native Roblox GUI instances. Functional components, local hooks, shared signals, keyed reconciliation, semantic themes, a component library, window management, and a small menu facade share one renderer.
 
+**New in 1.1:** four selectable designs—**MintGlass, Ember, Vector, Aura**—with distinct navigation, controls, effects and motion. The preview opens a live design picker. [Design API and examples](docs/designs.md).
+
 ## Quick preview
 
 Paste this into an environment that provides Roblox client APIs, `game:HttpGet` and `loadstring`:
@@ -10,17 +12,19 @@ Paste this into an environment that provides Roblox client APIs, `game:HttpGet` 
 loadstring(game:HttpGet("https://raw.githubusercontent.com/Cybersize/MattLib/main/Preview.lua"))()
 ```
 
-It opens the complete interactive gallery: inputs, layouts, notifications, dialogs, themes, configuration and window controls. `Preview.lua` embeds the framework and gallery in one file, so it needs no secondary downloads or runtime ModuleScripts. Re-running replaces the previous MattLib gallery. **RightShift** toggles visibility; a restore tray is available when hidden.
+It opens the complete interactive gallery: four designs, inputs, layouts, notifications, dialogs, themes, configuration and window controls. `Preview.lua` embeds the framework and gallery in one file, so it needs no secondary downloads or runtime ModuleScripts. Re-running replaces the previous MattLib gallery. **RightShift** toggles visibility; a restore tray is available when hidden.
 
 To load only the reusable library:
 
 ```lua
 local MattLib = loadstring(game:HttpGet("https://raw.githubusercontent.com/Cybersize/MattLib/main/dist/MattLib.lua"))()
+local window = MattLib:CreateWindow({Title="My UI", Design="Aura"})
+window:SetDesign("Ember") -- MintGlass, Ember, Vector, Aura
 ```
 
 [Minimal menu loader](examples/menu-loader.lua) · [Gallery loader](examples/preview-loader.lua) · [Repository](https://github.com/Cybersize/MattLib)
 
-Live executor compatibility has not been tested. Native Studio smoke evidence predates the MattLib rename; see the verification provenance below. Studio users should require the supplied ModuleScript instead of using the HTTP loader.
+The 1.1 runtime passed 20 native Studio smoke checks, including all four designs. Live executor compatibility and physical-device visual acceptance remain untested; see [verification](docs/verification.md). Studio users should require the supplied ModuleScript instead of using the HTTP loader.
 
 Start with **[dist/MattLib-Showcase.rbxlx](dist/MattLib-Showcase.rbxlx)** in Roblox Studio and press **F5**. It runs native smoke tests and opens the interactive gallery. The **[verification report](docs/verification.md)** distinguishes executed checks from remaining visual/device testing.
 
@@ -104,6 +108,7 @@ Dark and light themes, custom semantic tokens, runtime theme changes, reduced mo
 - [Elements, hooks, signals and custom components](docs/framework.md)
 - [Every component and its properties](docs/components.md)
 - [Styling, layout, themes and animation](docs/styling.md)
+- [Four designs and live switching](docs/designs.md)
 - [Windows, menus, notifications and configuration](docs/application.md)
 - [Build, testing, compatibility and troubleshooting](docs/development.md)
 - [Executed verification and remaining checks](docs/verification.md)

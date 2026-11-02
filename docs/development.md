@@ -40,7 +40,7 @@ Windows tool executables have `.exe` suffixes; quote paths containing spaces. Te
 
 The bundler resolves static `require(script.Parent...)` imports against the source hierarchy, rejects imports escaping src, unsupported/dynamic requires, unresolved imports and cycles, then emits dependency-ordered factories with a local module cache. Its manifest includes source/bundle SHA-256 hashes and dependencies. It contains no runtime ModuleScript resolution, loadstring, fetch or package-manager bootstrap. Build output is deterministic. If source changes, rebuild both Library.lua and the showcase place before testing/distributing.
 
-`default.project.json` maps the modular library, all example factories, Smoke module and client Bootstrap through Rojo. The generated `.rbxlx` uses the same bundle and examples without requiring Rojo. Change the Bootstrap LocalScript's `Example` attribute to `Dashboard`, `Basic`, or `Declarative` to open another demo. Default is `Gallery`.
+`default.project.json` maps the modular library, all example factories, Smoke module and client Bootstrap through Rojo. The generated `.rbxlx` uses the same bundle and examples without requiring Rojo. Change the Bootstrap LocalScript's `Example` attribute to `Dashboard`, `Basic`, `Declarative`, or `Designs` to open another demo. Default is `Gallery`, which starts on the live design chooser.
 
 ## Studio validation
 

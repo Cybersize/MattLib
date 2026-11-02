@@ -6,12 +6,41 @@ local Scope = require(script.Parent.Parent.Parent.utils.Scope)
 local Common = require(script.Parent.Parent.Common)
 local h = Element.h
 local Sections = {}
+function Sections.Reveal(p)
+	local env=Hooks.useEnvironment()
+	local theme=Hooks.useTheme()
+	local ref=Hooks.useRef(nil)
+	Hooks.useEffect(function()
+		local instance=ref.current
+		local scale=instance:FindFirstChildOfClass("UIScale")
+		local scope=Scope.new()
+		if env.animator.reducedMotion then instance.GroupTransparency=0; if scale then scale.Scale=1 end
+		else
+			instance.GroupTransparency=1
+			if scale then scale.Scale=0.985 end
+			scope:Delay(math.min(0.32,p.delay or (p.order or 0)*theme.motion.stagger),function()
+				scope:Add(env.animator:To(instance,{GroupTransparency=0},theme.motion.reveal,{channel="reveal"}))
+				if scale then scope:Add(env.animator:To(scale,{Scale=1},theme.motion.reveal,{channel="reveal"})) end
+			end)
+		end
+		return function() scope:Destroy() end
+	end,{theme.design.name,p.replayKey})
+	return h("@CanvasGroup",{name=p.name,ref=ref,motion=false,style=Style.merge({width="100%",height="auto",direction="column",gap="$spacing.sm",scale=1},p.style)},p.children)
+end
 function Sections.Section(p)
-	return h("Column",{name=p.name,style=Style.merge({background="$surface",backgroundTransparency=0,borderWidth=1,borderColor="$border",
-		radius="$radius.lg",padding="$spacing.lg",gap="$spacing.md"},p.style)}, {
-		p.title and h("Text",{text=p.title,style={font="$typography.medium",textSize=15}}) or false,
-		p.description and h("Paragraph",{text=p.description}) or false,
-		p.children,
+	local theme=Hooks.useTheme()
+	local mode=theme.design.section
+	local base={background="$surface",backgroundTransparency=if mode=="glass" then 0.08 else 0,borderWidth=1,borderColor="$border",borderTransparency=0.2,
+		radius="$radius.lg",padding="$spacing.lg",gap="$spacing.md"}
+	if mode=="ruled" then base.backgroundTransparency=1; base.borderWidth=0; base.radius=0; base.padding={8,0,14,0}
+	elseif mode=="soft" then base.background="$raised"; base.backgroundTransparency=0.22; base.borderWidth=0 end
+	return h(Sections.Reveal,{name=p.name,order=p.revealOrder or 0,style=Style.merge(base,p.style)}, {
+		p.title and h("Text",{key="heading",text=if mode=="inspector" or mode=="ruled" then string.upper(p.title) else p.title,
+			style={font=if mode=="inspector" then Enum.Font.Code else "$typography.medium",textSize=if mode=="soft" then 18 elseif mode=="inspector" then 12 else 15,
+				color=if mode=="inspector" then "$muted" else "$text"}}) or false,
+		mode=="ruled" and h("Separator",{key="rule"}) or false,
+		p.description and h("Paragraph",{key="description",text=p.description}) or false,
+		h(Element.Fragment,{key="content"},p.children),
 	})
 end
 function Sections.Collapsible(p)

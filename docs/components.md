@@ -23,6 +23,8 @@ Interactive inputs accept `disabled`, `value`, `defaultValue`, `onChange(value)`
 | `Tabs` | `items={{id,title,content,disabled?},...}` or direct `Tab` children. `value?`, `defaultValue?`, `onChange(id)`, `orientation="top"|"sidebar"`, `sidebarWidth=168`, `tabWidth=120`, `padding=16`, `unmountInactive=false`. Sidebar becomes top navigation below 600 safe-area pixels. Panels scroll. |
 | `Tab` | Metadata consumed by its direct Tabs/Sidebar parent: `id`, `title`, `disabled`, children. Rendering it outside Tabs is an error. |
 | `Sidebar` | Tabs with sidebar orientation. Same selection and item/child properties. |
+| `DesignPicker` | Selects MintGlass/Ember/Vector/Aura. Default dropdown or `presentation="segments"`; name, label, value, onChange, disabled, style. Without onChange it calls the owning application's SetDesign. |
+| `Reveal` | Native CanvasGroup entrance with opacity/scale. order=0, delay?, replayKey?, name/style; skips delayed motion when reduced motion is enabled. |
 
 Inactive panels remain mounted and preserve local state. Set `unmountInactive=true` for expensive pages that should release resources when inactive. Disabled tabs cannot be activated through their buttons; the application should choose an enabled default/controlled value. An unavailable selected id falls back to the first item visually.
 
@@ -48,6 +50,7 @@ UI.h("Tabs", { defaultValue = "settings" }, {
 | `openKey` | `"RightShift"`, a KeyCode name/EnumItem, or false to disable. Pauses while typing or an overlay is open. |
 | `defaultVisible` | true. Show/Hide are window-handle operations. Hidden windows get a scrollable restore tray for touch users. |
 | `theme` | Optional `"Dark"`, `"Light"`, custom token table, or Theme service. Omitted inherits the application's live theme. |
+| `design` | Optional MintGlass, Ember, Vector or Aura scoped override. Omitted follows the application. See [designs.md](designs.md). |
 | `windowRef` | Table receiving the managed window handle in `.current`, later nil. This differs from a native host ref. |
 | `onReady(handle)` | Called after native refs are committed and the manager registers the window. |
 | `onMove(rect)` / `onResize(rect)` | Called on successful pointer gesture completion. Rect has x,y,width,height. |

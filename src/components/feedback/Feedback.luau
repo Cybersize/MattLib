@@ -74,8 +74,12 @@ function Feedback.Toast(p)
 	local ref=Hooks.useRef(nil)
 	Hooks.useEffect(function()
 		if not present or not ref.current then return end
-		if open then ref.current.GroupTransparency=1 end
-		return env.animator:To(ref.current,{GroupTransparency=if open then 0 else 1},env.theme:Get().motion.normal)
+		local scope=Scope.new()
+		local scale=ref.current:FindFirstChildOfClass("UIScale")
+		if open then ref.current.GroupTransparency=1; if scale then scale.Scale=0.96 end end
+		scope:Add(env.animator:To(ref.current,{GroupTransparency=if open then 0 else 1},env.theme:Get().motion.normal))
+		if scale then scope:Add(env.animator:To(scale,{Scale=if open then 1 else 0.96},env.theme:Get().motion.normal)) end
+		return function() scope:Destroy() end
 	end,{open,present})
 	Hooks.useEffect(function()
 		if p.duration and open then
@@ -85,7 +89,7 @@ function Feedback.Toast(p)
 	end,{open,p.duration})
 	if not present then return nil end
 	return h("@CanvasGroup",{ref=ref,name=p.name or "Toast",role="status",accessibleName=(p.title or "Notification")..": "..(p.message or ""),
-		style=Style.merge({width="100%",height="auto",background="$surface",backgroundTransparency=0,borderWidth=1,borderColor="$border",
+		style=Style.merge({width="100%",height="auto",scale=1,background="$surface",backgroundTransparency=0,borderWidth=1,borderColor="$border",
 			radius="$radius.lg",padding=14,direction="column",gap=8},p.style)}, {
 		h("Row",{}, {
 			h(Feedback.StatusIndicator,{status=p.status or "info"}),

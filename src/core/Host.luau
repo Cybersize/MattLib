@@ -7,6 +7,7 @@ local Host = {}
 local classes = {Frame=true,CanvasGroup=true,TextLabel=true,TextButton=true,TextBox=true,ImageLabel=true,ImageButton=true,ScrollingFrame=true}
 local tweenable = {BackgroundColor3=true,BackgroundTransparency=true,TextColor3=true,TextTransparency=true,
 	ImageColor3=true,ImageTransparency=true,Position=true,Size=true,Rotation=true,GroupTransparency=true}
+local decorationTweenable={Scale=true,Rotation=true,Offset=true,Thickness=true,Transparency=true,Color=true}
 local function setRef(ref, value)
 	if type(ref) == "function" then ref(value)
 	elseif ref ~= nil then assert(type(ref) == "table", "ref must be a table or callback"); ref.current = value end
@@ -17,6 +18,9 @@ local function protected(node, callback, ...)
 end
 local function updateProperties(node, desired, animate)
 	local instance, goals = node.instance, {}
+	local active=(node.env.animator.active[instance] or {}).style
+	local interrupted=if not animate and active then active.goals else nil
+	if interrupted then node.env.animator:Cancel(instance,"style") end
 	node.applying = true
 	for property in node.assigned do
 		if desired[property] == nil then
@@ -27,7 +31,7 @@ local function updateProperties(node, desired, animate)
 	for property, value in desired do
 		assert(property ~= "Parent" and property ~= "ClassName", "Renderer owns " .. property)
 		if node.original[property] == nil then node.original[property] = instance[property] end
-		if node.assigned[property] ~= value or (property == "Text" and instance[property] ~= value) then
+		if node.assigned[property] ~= value or (property == "Text" and instance[property] ~= value) or (interrupted and interrupted[property]~=nil) then
 			if animate and tweenable[property] and node.assigned[property] ~= nil and node.assigned[property] ~= value then goals[property] = value
 			elseif instance[property] ~= value then instance[property] = value end
 		end
@@ -52,18 +56,37 @@ function Host.refresh(node, animate)
 		if not decorations[key] then
 			node.env.animator:Forget(instance)
 			instance:Destroy(); node.decorations[key] = nil; Diagnostics.add("instances", -1)
+			node.decorationAssigned[key]=nil
+		end
+	end
+	-- Create parents before attaching nested halo modifiers; ownership is still flat.
+	for key,spec in decorations do
+		if not node.decorations[key] then
+			local instance=Instance.new(spec.class)
+			instance.Name="Matt_"..key
+			node.decorations[key]=instance
+			node.decorationAssigned[key]={}
+			Diagnostics.add("instances",1)
 		end
 	end
 	for key, spec in decorations do
 		local instance = node.decorations[key]
-		if not instance then
-			instance = Instance.new(spec.class)
-			instance.Name = "Matt_" .. key
-			node.decorations[key] = instance
-			Diagnostics.add("instances", 1)
+		local assigned=node.decorationAssigned[key]
+		local goals={}
+		local active=(node.env.animator.active[instance] or {}).style
+		local interrupted=if (not animate or node.props.motion==false) and active then active.goals else nil
+		if interrupted then node.env.animator:Cancel(instance,"style") end
+		for property, value in spec do
+			if property~="class" and property~="parentKey" and (assigned[property]~=value or (interrupted and interrupted[property]~=nil)) then
+				local kind=typeof(value)
+				if animate and node.props.motion~=false and assigned[property]~=nil and decorationTweenable[property]
+					and (kind=="number" or kind=="Color3" or kind=="Vector2") then goals[property]=value
+				elseif instance[property]~=value then instance[property]=value end
+				assigned[property]=value
+			end
 		end
-		for property, value in spec do if property ~= "class" and instance[property] ~= value then instance[property] = value end end
-		instance.Parent = node.instance
+		if next(goals) then node.env.animator:To(instance,goals,node.env.theme:Get().motion.fast,{channel="style",merge=true}) end
+		instance.Parent=if spec.parentKey then node.decorations[spec.parentKey] else node.instance
 	end
 end
 local function state(node, name, value)
@@ -93,7 +116,7 @@ end
 function Host.create(node, className)
 	assert(classes[className], "Unsupported native host class: " .. className)
 	node.instance, node.className, node.scope = Instance.new(className), className, Scope.new()
-	node.decorations, node.assigned, node.original, node.events, node.changes, node.attributes = {}, {}, {}, {}, {}, {}
+	node.decorations, node.assigned, node.original, node.events, node.changes, node.attributes,node.decorationAssigned = {}, {}, {}, {}, {}, {},{}
 	node.states = {hover=false,pressed=false,focus=false,active=false,disabled=false}
 	Diagnostics.add("instances", 1)
 end

@@ -28,16 +28,16 @@ function Common.scope()
 	Hooks.useEffect(function() return function() scope:Destroy() end end, {})
 	return scope
 end
-function Common.presence(open)
+function Common.presence(open,duration)
 	local env = Hooks.useEnvironment()
 	local present, setPresent = Hooks.useState(open)
 	Hooks.useEffect(function()
 		if open then setPresent(true); return end
 		if env.animator.reducedMotion then setPresent(false); return end
 		local scope = Scope.new()
-		scope:Delay(env.theme:Get().motion.normal, function() setPresent(false) end)
+		scope:Delay(duration or env.theme:Get().motion.normal, function() setPresent(false) end)
 		return function() scope:Destroy() end
-	end, {open})
+	end, {open,duration})
 	return present or open
 end
 function Common.key(ref, callback, descendants)

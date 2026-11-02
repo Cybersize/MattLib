@@ -7,6 +7,7 @@ for _, name in { "background", "backgroundTransparency", "color", "font", "textS
 	"padding", "paddingX", "paddingY", "borderColor", "borderWidth", "radius", "opacity", "direction", "gap",
 	"horizontalAlign", "verticalAlign", "distribute", "wrap", "grow", "shrink", "visible", "overflow", "zIndex",
 	"rotation", "hover", "pressed", "focus", "active", "disabled", "imageColor", "imageTransparency", "scrollbarColor",
+	"gradient","scale","borderTransparency","glow","glowColor",
 } do valid[name] = true end
 local function dim(value)
 	if typeof(value) == "UDim" then return value end
@@ -96,7 +97,31 @@ function Style.resolve(source, theme, state, className)
 	if style.radius then decorations.corner = { class = "UICorner", CornerRadius = UDim.new(0, style.radius) } end
 	if style.borderWidth and style.borderWidth > 0 then
 		decorations.stroke = { class = "UIStroke", Thickness = style.borderWidth, Color = style.borderColor or theme.border,
-			ApplyStrokeMode = Enum.ApplyStrokeMode.Border }
+			ApplyStrokeMode = Enum.ApplyStrokeMode.Border,Transparency=style.borderTransparency or 0 }
+	end
+	if style.scale~=nil then
+		assert(type(style.scale)=="number" and style.scale>0 and style.scale<math.huge,"Scale must be finite and positive")
+		decorations.scale={class="UIScale",Scale=style.scale}
+	end
+	if style.gradient and style.gradient~=false then
+		local gradient=style.gradient
+		assert(type(gradient)=="table","gradient must be {from,to,rotation?,transparency?}")
+		local from=Theme.token(theme,gradient.from or "$accent")
+		local to=Theme.token(theme,gradient.to or "$accentDeep")
+		assert(typeof(from)=="Color3" and typeof(to)=="Color3","Gradient endpoints must be Color3 values or color tokens")
+		local alpha=gradient.transparency or {0,0}
+		for _,value in {alpha[1] or 0,alpha[2] or 0} do assert(type(value)=="number" and value>=0 and value<=1,"Gradient transparency must be 0..1") end
+		decorations.gradient={class="UIGradient",Color=ColorSequence.new(from,to),Rotation=gradient.rotation or 90,
+			Offset=gradient.offset or Vector2.new(),Transparency=NumberSequence.new(alpha[1] or 0,alpha[2] or 0)}
+	end
+	if style.glow~=nil then
+		assert(type(style.glow)=="number" and style.glow>=0 and style.glow<=1,"Glow must be 0..1")
+		assert(not style.direction,"Glow needs a non-list host; put a glowing Frame around flow content")
+		local color=style.glowColor or theme.accent
+		decorations.halo={class="Frame",BackgroundTransparency=1,BorderSizePixel=0,Size=UDim2.new(1,8,1,8),
+			Position=UDim2.fromOffset(-4,-4),ZIndex=0,Active=false,Selectable=false}
+		decorations.haloCorner={class="UICorner",parentKey="halo",CornerRadius=UDim.new(0,(style.radius or theme.radius.md)+4)}
+		decorations.haloStroke={class="UIStroke",parentKey="halo",Color=color,Thickness=8,Transparency=1-style.glow*0.22,ApplyStrokeMode=Enum.ApplyStrokeMode.Border}
 	end
 	if style.padding ~= nil or style.paddingX ~= nil or style.paddingY ~= nil then
 		local padding = style.padding or 0

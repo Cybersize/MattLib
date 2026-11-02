@@ -412,7 +412,140 @@ test("sparse child arrays and options fail explicitly",function()
 	raises(function() UI.mount(UI.h("Dropdown",{options={a="A"}})) end,"dense array")
 end)
 
-for _,name in {"basic","declarative","component-gallery","complex-dashboard"} do
+test("all four design presets expose distinct semantics and immutable names",function()
+	local lib=new(); eq(lib:GetDesign(),"MintGlass"); eq(#lib.Designs,4); assert(table.isfrozen(lib.Designs))
+	local expected={MintGlass="sidebar",Ember="top",Vector="tree",Aura="pills"}
+	local colors={}
+	for _,name in lib.Designs do
+		lib:SetDesign(name); local theme=lib.Theme:Get(); eq(theme.design.name,name); eq(theme.design.navigation,expected[name]); assert(theme.motion.reveal>0)
+		local key=tostring(theme.accent.R)..":"..tostring(theme.accent.G)..":"..tostring(theme.accent.B); assert(not colors[key]); colors[key]=true
+	end
+	local list=lib:GetDesigns(); list[1].name="changed"; eq(lib:GetDesigns()[1].name,"MintGlass")
+end)
+test("live design cycles preserve window, tab, hook and control identity",function()
+	local lib=new(); local UI=lib.UI
+	local function Page()
+		local count,set=UI.useState(0)
+		return UI.h("Section",{title="State"}, {UI.h("Button",{name="stateful",text=tostring(count),variant="primary",onClick=function() set(function(n) return n+1 end) end}),UI.h("Toggle",{name="persistent",defaultValue=true})})
+	end
+	local root=UI.mount(UI.h("Window",{id="designs"},UI.h("Tabs",{name="nav",items={{id="one",title="One",content=UI.h(Page)}}}))); Mock.flush()
+	local frame,button,toggle=root:Find("Window:designs"),root:Find("stateful"),root:Find("persistent")
+	button.Activated:Fire(); Mock.flush(); local baseline=lib:GetDiagnostics()
+	for _=1,3 do for _,name in {"Ember","Vector","Aura","MintGlass"} do
+		lib:SetDesign(name); Mock.flush(); eq(root:Find("Window:designs"),frame); eq(root:Find("stateful"),button); eq(button.Text,"1")
+		eq(root:Find("persistent"),toggle); eq(toggle:GetAttribute("AsterValue"),"true"); eq(frame:GetAttribute("MattDesign"),name)
+	end end
+	local after=lib:GetDiagnostics(); eq(after.components,baseline.components); eq(after.instances,baseline.instances); eq(after.connections,baseline.connections); eq(after.subscriptions,baseline.subscriptions)
+end)
+test("design navigation switches actual orientation and indicator treatment",function()
+	local lib=new(); local UI=lib.UI
+	local root=UI.mount(UI.h("Window",{},UI.h("Tabs",{name="nav",items={{id="one",title="One"},{id="two",title="Two"}}}))); Mock.flush()
+	local nav=root:Find("TabNavigation")
+	for _,entry in {{"MintGlass","sidebar"},{"Ember","top"},{"Vector","tree"},{"Aura","pills"}} do
+		lib:SetDesign(entry[1]); Mock.flush(); eq(root:Find("nav"):GetAttribute("MattNavigation"),entry[2]); eq(root:Find("TabNavigation"),nav)
+		if entry[2]=="sidebar" or entry[2]=="tree" then eq(nav.Size.Y.Scale,1) else eq(nav.Size.X.Scale,1) end
+	end
+end)
+test("per-window design overrides remain independent of application changes",function()
+	local lib=new()
+	local ember=lib:CreateWindow({Id="ember",Design="Ember",Theme="Dark"}); local tab=ember:AddTab({Title="Main"}); local toggle=tab:AddToggle({Title="Value",Default=true})
+	local aura=lib:CreateWindow({Id="aura",Design="Aura"}); aura:AddTab({Title="Main"}); Mock.flush()
+	local control=toggle:GetInstance(); lib:SetDesign("Vector"); Mock.flush()
+	eq(ember:GetInstance():GetAttribute("MattDesign"),"Ember"); eq(aura:GetInstance():GetAttribute("MattDesign"),"Aura")
+	ember:SetDesign("MintGlass"); Mock.flush(); eq(ember:GetDesign(),"MintGlass"); eq(toggle:GetInstance(),control); eq(toggle:GetValue(),true)
+end)
+test("Dark and Light preserve the chosen design accent and layout",function()
+	local lib=new({design="Ember",theme="Dark"}); eq(lib.Theme:Get().accent,Color3.fromRGB(255,108,34))
+	lib:SetTheme("Light"); eq(lib:GetDesign(),"Ember"); eq(lib.Theme:Get().accent,Color3.fromRGB(255,108,34)); eq(lib.Theme:Get().background,Color3.fromRGB(242,244,249))
+	lib:SetTheme("Dark"); eq(lib:GetDesign(),"Ember"); eq(lib.Theme:Get().background,Color3.fromRGB(22,21,20))
+end)
+test("invalid designs are rejected before mutating a live application",function()
+	local lib=new(); local window=lib:CreateWindow({Title="Valid"}); Mock.flush(); local frame=window:GetInstance()
+	raises(function() lib:SetDesign("Unknown") end,"Unknown MattLib design"); eq(lib:GetDesign(),"MintGlass")
+	raises(function() window:SetDesign("Unknown") end,"Unknown MattLib design"); eq(window:GetInstance(),frame); assert(window.root.alive)
+end)
+test("hover and press animate native scale, stroke and gradient modifiers",function()
+	local lib=new({reducedMotion=false}); local UI=lib.UI
+	local root=UI.mount(UI.h("Button",{name="motion",text="Motion",variant="primary"})); Mock.flush()
+	local button=root:Find("motion"); local scale=button:FindFirstChildOfClass("UIScale"); local gradient=button:FindFirstChildOfClass("UIGradient")
+	assert(scale and gradient and button:FindFirstChild("Matt_halo"))
+	button.MouseEnter:Fire(); Mock.flush(); assert(lib:GetDiagnostics().tweens>0); Mock.advance(0.15); eq(scale.Scale,lib.Theme:Get().effects.hoverScale); eq(gradient.Rotation,72)
+	button.InputBegan:Fire(Mock.input("MouseButton1")); Mock.advance(0.15); eq(scale.Scale,lib.Theme:Get().effects.pressScale)
+	Mock.services.UserInputService.InputEnded:Fire(Mock.input("MouseButton1"),false); button.MouseLeave:Fire(); Mock.advance(0.15); eq(scale.Scale,1); eq(lib:GetDiagnostics().tweens,0)
+end)
+test("switching designs during a hover tween cannot restore stale colors",function()
+	local lib=new({reducedMotion=false}); local UI=lib.UI
+	local root=UI.mount(UI.h("Button",{name="changing",text="Changing"})); local button=root:Find("changing")
+	button.MouseEnter:Fire(); lib:SetDesign("Vector"); Mock.flush(); Mock.advance(1)
+	eq(button.BackgroundColor3,lib.Theme:Get().hover); eq(button:FindFirstChildOfClass("UIScale").Scale,1)
+end)
+test("effect intensity removes glow helpers and window ambience",function()
+	local lib=new(); local UI=lib.UI
+	local root=UI.mount(UI.h("Window",{},UI.h("Button",{name="glow",text="Glow",variant="primary"}))); Mock.flush()
+	local button=root:Find("glow"); assert(button:FindFirstChild("Matt_halo"))
+	lib:SetEffectIntensity(0); Mock.flush(); eq(button:FindFirstChild("Matt_halo"),nil); eq(root:Find("WindowAtmosphere").BackgroundTransparency,1)
+	lib:SetEffectIntensity(1); Mock.flush(); assert(button:FindFirstChild("Matt_halo")); raises(function() lib:SetEffectIntensity(2) end,"0..1")
+end)
+test("reduced motion completes and prevents hover tweens",function()
+	local lib=new({reducedMotion=false}); local UI=lib.UI
+	local root=UI.mount(UI.h("Button",{name="reduced",text="Reduced",variant="primary"})); local button=root:Find("reduced")
+	button.MouseEnter:Fire(); assert(lib:GetDiagnostics().tweens>0); lib:SetReducedMotion(true); eq(lib:GetDiagnostics().tweens,0)
+	button.MouseLeave:Fire(); eq(button:FindFirstChildOfClass("UIScale").Scale,1); eq(lib:GetDiagnostics().tweens,0)
+end)
+test("all designs minimize to their own title height and restore dimensions",function()
+	local lib=new(); local UI=lib.UI; local ref={}
+	UI.mount(UI.h("Window",{windowRef=ref,size={600,400}})); Mock.flush()
+	for _,name in lib.Designs do
+		lib:SetDesign(name); Mock.flush(); ref.current:Minimize(); Mock.flush(); eq(ref.current:GetRect().height,lib.Theme:Get().design.titleHeight)
+		ref.current:Restore(); Mock.flush(); eq(ref.current:GetRect().height,400)
+	end
+	ref.current:Minimize(); lib:SetDesign("Aura"); Mock.flush(); eq(ref.current:GetRect().height,54)
+end)
+test("design changes retain clamped window geometry",function()
+	local lib=new(); local UI=lib.UI; local ref={}; UI.mount(UI.h("Window",{windowRef=ref,size={1400,1000}})); Mock.flush()
+	local rect=ref.current:GetRect()
+	for _,name in lib.Designs do lib:SetDesign(name); Mock.flush(); eq(ref.current.frame.Size.X.Offset,rect.width); eq(ref.current.frame.Size.Y.Offset,rect.height) end
+end)
+test("inactive tab state survives animated design and tab transitions",function()
+	local lib=new(); local UI=lib.UI; local select
+	local function Pages()
+		local value,set=UI.useState("one"); select=set
+		return UI.h("Tabs",{value=value,onChange=set,items={{id="one",title="One",content=UI.h("Toggle",{name="tab-value",defaultValue=true})},{id="two",title="Two"}}})
+	end
+	local root=UI.mount(UI.h(Pages)); Mock.flush(); local control=root:Find("tab-value")
+	select("two"); Mock.flush(); lib:SetDesign("Aura"); Mock.flush(); select("one"); Mock.flush(); eq(root:Find("tab-value"),control); eq(control:GetAttribute("AsterValue"),"true")
+end)
+test("staggered reveal timers and tweens cancel on unmount",function()
+	local lib=new({reducedMotion=false}); local UI=lib.UI
+	local root=UI.mount(UI.h("Reveal",{name="delayed",delay=0.3},UI.h("Text",{text="Later"})))
+	eq(root:Find("delayed").GroupTransparency,1); root:Unmount(); Mock.advance(1); eq(lib:GetDiagnostics().tweens,0)
+end)
+test("design picker uses the shared live application design",function()
+	local lib=new(); local UI=lib.UI; local root=UI.mount(UI.h("DesignPicker",{presentation="segments"})); Mock.flush()
+	Mock.findText(lib._env.runtime.screen,"Ember").Activated:Fire(); Mock.flush(); eq(lib:GetDesign(),"Ember"); assert(root.alive)
+end)
+test("new effect styles validate inputs instead of failing silently",function()
+	local lib=new(); local UI=lib.UI
+	raises(function() UI.mount(UI.h("Frame",{style={scale=-1}})) end,"Scale")
+	raises(function() UI.mount(UI.h("Frame",{style={gradient={from="invalid"}}})) end,"Gradient endpoints")
+	raises(function() UI.mount(UI.h("Column",{style={glow=0.2}})) end,"non-list host")
+end)
+for _,design in {"MintGlass","Ember","Vector","Aura"} do
+	test("interactive design gallery: "..design,function()
+		local example=Examples["component-gallery"](Library,{design=design,reducedMotion=true}); table.insert(libraries,example.library); Mock.flush()
+		eq(example.library:GetDesign(),design); assert(example.root:Find("GalleryDesignPicker")); assert(example.root:Find("DesignTryButton"))
+		example.Destroy()
+	end)
+end
+test("gallery profiles save and restore the selected design",function()
+	local example=Examples["component-gallery"](Library,{reducedMotion=true}); local lib=example.library; table.insert(libraries,lib); Mock.flush()
+	Mock.findText(lib._env.runtime.screen,"Ember").Activated:Fire(); Mock.flush(); eq(lib:GetDesign(),"Ember"); assert(lib.Config:Save("style"))
+	lib:SetDesign("Aura"); Mock.flush(); assert(lib.Config:Load("style")); Mock.flush(); eq(lib:GetDesign(),"Ember")
+	local ok=lib.Config:Import('{"schema":"mattlib/config","version":1,"values":{"gallery/design":"Missing"}}'); eq(ok,false)
+	example.Destroy()
+end)
+
+for _,name in {"basic","declarative","component-gallery","complex-dashboard","design-selection"} do
 	test("working example factory: "..name,function()
 		local example=Examples[name](Library)
 		table.insert(libraries,example.library)

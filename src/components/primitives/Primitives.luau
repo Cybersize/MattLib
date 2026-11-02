@@ -1,6 +1,7 @@
 --!nonstrict
 local Element = require(script.Parent.Parent.Parent.core.Element)
 local Style = require(script.Parent.Parent.Parent.styling.StyleResolver)
+local Hooks = require(script.Parent.Parent.Parent.core.Hooks)
 local h = Element.h
 local Primitives = {}
 local textStyle = {backgroundTransparency=1,color="$text",font="$typography.font",textSize="$typography.body",
@@ -55,9 +56,26 @@ local variants = {
 }
 function Primitives.Button(p)
 	assert(variants[p.variant or "secondary"], "Unknown button variant")
+	local theme=Hooks.useTheme()
+	local effects=theme.effects
+	local primary=p.variant=="primary"
+	local glow=effects.glow*effects.intensity
+	local interactive={scale=1,borderWidth=1,borderTransparency=if primary then 0.6 else 0.2,
+		hover={scale=effects.hoverScale,borderColor="$accent",borderTransparency=0.1},
+		pressed={scale=effects.pressScale},focus={borderColor="$accent",borderWidth=2,borderTransparency=0},
+		disabled={scale=1,glow=if primary and glow>0 then 0 else nil}}
+	if primary and effects.gradient>0 then
+		-- UIGradient multiplies the host color. Ratios retain the intended accent palette.
+		local function ratio(deep,base) return if base<=0 then 1 else math.clamp(deep/base,0,1) end
+		local shade=Color3.new(ratio(theme.accentDeep.R,theme.accent.R),ratio(theme.accentDeep.G,theme.accent.G),ratio(theme.accentDeep.B,theme.accent.B))
+		interactive.gradient={from=Color3.new(1,1,1),to=shade,rotation=90}
+		interactive.hover.gradient={from=Color3.new(1,1,1),to=shade,rotation=72}
+		interactive.disabled.gradient=false
+	end
+	if primary and glow>0 then interactive.glow=glow*0.22; interactive.hover.glow=glow*0.7; interactive.pressed.glow=glow*0.32 end
 	local props = hostProps(p,Style.merge(textStyle,{width="100%",height="$controlHeight",radius="$radius.md",backgroundTransparency=0,
 		textAlign="center",wrapped=false,paddingX="$spacing.md",focus={borderWidth=2,borderColor="$accent"},
-		disabled={color="$disabled",background="$input",backgroundTransparency=0,borderColor="$border"}},variants[p.variant or "secondary"]),
+		disabled={color="$disabled",background="$input",backgroundTransparency=0,borderColor="$border"}},variants[p.variant or "secondary"],interactive),
 		{Text=tostring(p.text or p.label or ""),TextTruncate=Enum.TextTruncate.AtEnd})
 	props.events = Style.merge(p.events,{Activated=function(instance,...)
 		if not p.disabled and p.onClick then p.onClick(instance,...) end

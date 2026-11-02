@@ -13,6 +13,10 @@ local Vector2={new=function(x,y) return setmetatable({X=x or 0,Y=y or 0},vecMT) 
 local colorMT=valueType("Color3",{"R","G","B"})
 local Color3={new=function(r,g,b) return setmetatable({R=r or 0,G=g or 0,B=b or 0},colorMT) end}
 Color3.fromRGB=function(r,g,b) return Color3.new(r/255,g/255,b/255) end
+local colorSequenceMT=valueType("ColorSequence",{"From","To"})
+local ColorSequence={new=function(from,to) return setmetatable({From=from,To=to or from,Keypoints={{Time=0,Value=from},{Time=1,Value=to or from}}},colorSequenceMT) end}
+local numberSequenceMT=valueType("NumberSequence",{"From","To"})
+local NumberSequence={new=function(from,to) return setmetatable({From=from,To=to or from,Keypoints={{Time=0,Value=from},{Time=1,Value=to or from}}},numberSequenceMT) end}
 local dimMT=valueType("UDim",{"Scale","Offset"})
 local UDim={new=function(scale,offset) return setmetatable({Scale=scale or 0,Offset=offset or 0},dimMT) end}
 local dim2MT=valueType("UDim2",{"X","Y"})
@@ -78,7 +82,8 @@ local classProps={Frame={},CanvasGroup={GroupTransparency=0,GroupColor3=Color3.n
 	UIListLayout={FillDirection=Enum.FillDirection.Vertical,SortOrder=Enum.SortOrder.Name,Padding=UDim.new(),HorizontalAlignment=Enum.HorizontalAlignment.Left,VerticalAlignment=Enum.VerticalAlignment.Top,
 		HorizontalFlex=Enum.UIFlexAlignment.None,VerticalFlex=Enum.UIFlexAlignment.None,Wraps=false,AbsoluteContentSize=Vector2.new()},
 	UIPadding={PaddingTop=UDim.new(),PaddingBottom=UDim.new(),PaddingLeft=UDim.new(),PaddingRight=UDim.new()},
-	UICorner={CornerRadius=UDim.new(0,8)},UIStroke={Thickness=1,Color=Color3.new(),ApplyStrokeMode=Enum.ApplyStrokeMode.Contextual},
+	UICorner={CornerRadius=UDim.new(0,8)},UIStroke={Thickness=1,Color=Color3.new(),Transparency=0,ApplyStrokeMode=Enum.ApplyStrokeMode.Contextual},
+	UIScale={Scale=1},UIGradient={Color=ColorSequence.new(Color3.new(1,1,1)),Transparency=NumberSequence.new(0),Rotation=0,Offset=Vector2.new()},
 	UISizeConstraint={MinSize=Vector2.new(),MaxSize=Vector2.new(100000,100000)},UIFlexItem={FlexMode=Enum.UIFlexMode.None,GrowRatio=0,ShrinkRatio=0},
 	BindableFunction={OnInvoke=false},PlayerGui={},Player={},Folder={},UserInputService={},GuiService={SelectedObject=false},TweenService={},HttpService={},RunService={},Players={LocalPlayer=false},
 }
@@ -307,6 +312,7 @@ function Mock.nativeConnections()
 end
 Mock.Instance,Mock.Vector2,Mock.Color3,Mock.UDim,Mock.UDim2,Mock.Enum,Mock.typeof=Instance,Vector2,Color3,UDim,UDim2,Enum,typeof
 Mock.task,Mock.game,Mock.services,Mock.TweenInfo,Mock.playerGui=task,game,services,TweenInfo,playerGui
+Mock.ColorSequence,Mock.NumberSequence=ColorSequence,NumberSequence
 Mock.workspace={CurrentCamera={ViewportSize=Mock.viewport}}
 Mock.warn=function(...) table.insert(Mock.warnings,table.concat({...}," ")) end
 return Mock

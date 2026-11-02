@@ -1,11 +1,26 @@
-return function(Library)
-	local app=Library.new({id="mattlib-gallery",theme="Dark"})
+return function(Library,options)
+	options=options or {}
+	local app=Library.new({id="mattlib-gallery",design=options.design or "MintGlass",reducedMotion=options.reducedMotion})
 	local UI=app.UI
 	local h=UI.h
 	local settings={enabled=UI.signal(true),checked=UI.signal(false),volume=UI.signal(64),range=UI.signal({20,80}),
 		name=UI.signal("Workspace"),number=UI.signal(8),region=UI.signal("Singapore"),tags=UI.signal({"Design","Luau"}),
-		color=UI.signal(app.Theme:Get().accent),key=UI.signal("F6"),radio=UI.signal("Balanced"),segment=UI.signal("Daily")}
-	for id,signal in settings do app.Config:Register("gallery/"..id,signal,signal:get()) end
+		color=UI.signal(app.Theme:Get().accent),key=UI.signal("F6"),radio=UI.signal("Balanced"),segment=UI.signal("Daily"),
+		design=UI.signal(app:GetDesign()),intensity=UI.signal(1),reduced=UI.signal(options.reducedMotion==true)}
+	for id,signal in settings do
+        app.Config:Register("gallery/"..id,signal,signal:get(),function(value)
+            if id=="design" then return table.find(app.Designs,value)~=nil,"Unknown design" end
+            if id=="intensity" then return type(value)=="number" and value>=0 and value<=1,"Intensity must be 0..1" end
+            return true
+        end)
+    end
+	local disconnects={}
+	table.insert(disconnects,settings.design:subscribe(function(name)
+		if app:GetDesign()~=name then app:SetDesign(name); app:SetEffectIntensity(settings.intensity:get()) end
+	end))
+	table.insert(disconnects,app.Theme.signal:subscribe(function(theme) if settings.design:get()~=theme.design.name then settings.design:set(theme.design.name) end end))
+	table.insert(disconnects,settings.intensity:subscribe(function(value) app:SetEffectIntensity(value) end))
+	table.insert(disconnects,settings.reduced:subscribe(function(value) app:SetReducedMotion(value) end))
 	local function bind(name)
 		return UI.useSignal(settings[name]),function(value) settings[name]:set(value) end
 	end
@@ -19,7 +34,7 @@ return function(Library)
 	local function Overview()
 		local clicks,setClicks=UI.useState(0)
 		return h("Column",{style={gap=18}}, {
-			h("Badge",{text="ASTER  /  COMPONENT STUDIO"}),
+			h("Badge",{text="MATTLIB  /  COMPONENT STUDIO"}),
 			h("Text",{text="A considered interface.",style={textSize=28,font="$typography.bold"}}),
 			h("Paragraph",{text="A native Luau component system for interfaces that feel intentional. Explore the controls, change the theme, and build something of your own."}),
 			h("Row",{style={gap=12}}, {
@@ -92,7 +107,7 @@ return function(Library)
 		return h("Column",{style={gap=16}}, {
 			h("Text",{text="Feedback & overlays",style={textSize=24,font="$typography.bold"}}),
 			h("Section",{title="Status and progress"}, {
-				h("Row",{}, {h("StatusIndicator",{status="success",text="Operational"}),h("StatusIndicator",{status="warning",text="Attention"}),h("Badge",{text="v1.0"})}),
+				h("Row",{}, {h("StatusIndicator",{status="success",text="Operational"}),h("StatusIndicator",{status="warning",text="Attention"}),h("Badge",{text="v1.1"})}),
 				h("ProgressBar",{label="Release preparation",value=progress}),
 				h("Slider",{label="Preview progress",min=0,max=100,value=math.round(progress*100),onChange=function(n) setProgress(n/100) end}),
 				h("LoadingIndicator",{text="Waiting for your next idea…"}),
@@ -111,30 +126,93 @@ return function(Library)
 			}),
 		})
 	end
-	local function Appearance()
-		local theme,setTheme=UI.useState("Dark"); local reduced,setReduced=UI.useState(false); local json,setJson=UI.useState("")
-		return h("Column",{style={gap=16}}, {
-			h("Text",{text="Make it yours",style={textSize=24,font="$typography.bold"}}),
-			h("Section",{title="Appearance"}, {
-				h("SegmentedControl",{label="Color theme",options={"Dark","Light"},value=theme,onChange=function(value) setTheme(value); app:SetTheme(value) end}),
-				h("Toggle",{label="Reduce motion",description="Complete active transitions and stop looping animations.",value=reduced,onChange=function(value) setReduced(value); app:SetReducedMotion(value) end}),
-				h("Button",{text="Use selected highlight color",onClick=function() app.Theme:Extend({accent=settings.color:get()}) end}),
-			}),
-			h("Section",{title="Configuration",description="Profiles use optional filesystem capabilities or an in-memory fallback."}, {
+	local headings={MintGlass="Make it your own.",Ember="Control the feel.",Vector="Precision in every detail.",Aura="Find your flow."}
+	local descriptions={MintGlass="A little depth. A lot more character.",Ember="Warm contrast and tactile controls.",Vector="A focused workspace with precise interactions.",Aura="A softer take on powerful controls."}
+	local function Configurations()
+		local profile,setProfile=UI.useState("default")
+		local json,setJson=UI.useState("")
+		local function report(title,ok,result)
+			app:Notify({title=title,message=if ok then tostring(result or "Settings restored") else tostring(result),status=if ok then "success" else "error"})
+		end
+		return h("Column",{style={gap=18}}, {
+			h("Text",{text="Your workspace, saved.",style={textSize=28,font="$typography.bold"}}),
+			h("Paragraph",{text="Profiles include the selected design, effect intensity, reduced motion and registered control values."}),
+			h("Section",{title="Profiles"}, {
+				h("TextInput",{label="Profile name",value=profile,onChange=setProfile}),
 				h("Row",{style={distribute="fill"}}, {
-					h("Button",{text="Export JSON",onClick=function() local text,err=app.Config:Export(); if text then setJson(text) else app:Notify({title="Export failed",message=err,status="error"}) end end}),
-					h("Button",{text="Import JSON",onClick=function() local ok,err=app.Config:Import(json); app:Notify({title=if ok then "Imported" else "Import failed",message=err or "Settings restored",status=if ok then "success" else "error"}) end}),
+					h("Button",{text="Save profile",variant="primary",onClick=function() local ok,result=app.Config:Save(profile); report("Save profile",ok,result) end}),
+					h("Button",{text="Load profile",onClick=function() local ok,result=app.Config:Load(profile); report("Load profile",ok,result) end}),
 				}),
+				h("Button",{text="Reset defaults",variant="ghost",onClick=function() app.Config:Reset() end}),
+			}),
+			h("Section",{title="JSON transfer",revealOrder=1}, {
 				h("TextInput",{label="Profile JSON",value=json,onChange=setJson,multiline=true}),
-				h("Button",{text="Reset defaults",onClick=function() app.Config:Reset() end}),
+				h("Row",{style={distribute="fill"}}, {
+					h("Button",{text="Export JSON",onClick=function() local text,err=app.Config:Export(); if text then setJson(text) else report("Export failed",false,err) end end}),
+					h("Button",{text="Import JSON",onClick=function() local ok,err=app.Config:Import(json); report("Import profile",ok,err) end}),
+				}),
 			}),
 		})
 	end
+	local function DesignLab()
+		local theme=UI.useTheme()
+		local design,setDesign=bind("design")
+		local intensity,setIntensity=bind("intensity")
+		local reduced,setReduced=bind("reduced")
+		local stageRef=UI.useRef(nil)
+		local width,setWidth=UI.useState(700)
+		UI.useEffect(function()
+			local function measure() if stageRef.current and stageRef.current.AbsoluteSize.X>0 then setWidth(stageRef.current.AbsoluteSize.X) end end
+			local connection=stageRef.current:GetPropertyChangedSignal("AbsoluteSize"):Connect(measure); measure()
+			return function() connection:Disconnect() end
+		end,{})
+		local split=width>=650
+		local small=width<480
+		return h("Column",{ref=stageRef,style={gap=18}}, {
+			h("Text",{text="MATTLIB  /  DESIGN STUDIO",style={textSize=11,font=Enum.Font.Code,color="$accent"}}),
+			h("Text",{text=headings[design],style={textSize=if design=="Vector" then 25 else 31,font="$typography.bold"}}),
+			h("Paragraph",{text=descriptions[design]}),
+			h("DesignPicker",{name="GalleryDesignPicker",presentation=if small then "dropdown" else "segments",label="Choose your design",value=design,onChange=setDesign}),
+			h("Frame",{style={width="100%",height="auto",direction=if split then "row" else "column",gap=16,verticalAlign="start"}}, {
+				h("Section",{name="DesignEffects",title="Feel & motion",style={width=if split then UDim.new(0.62,-8) else "100%"}}, {
+					h("Toggle",{label="Smooth transitions",description="Window reveals, moving tab indicators and hover feedback.",value=not reduced,onChange=function(value) setReduced(not value) end}),
+					h("Toggle",{label="Ambient effects",description="Accent halos and subtle window lighting.",value=intensity>0,onChange=function(value) setIntensity(if value then 1 else 0) end}),
+					h("Slider",{name="DesignIntensity",label="Effect intensity",value=math.round(intensity*100),min=0,max=100,onChange=function(value) setIntensity(value/100) end,format=function(value) return value.."%" end}),
+					h("Separator"),
+					h("Text",{text="Interaction preview",style={font="$typography.medium"}}),
+					h("Button",{name="DesignTryButton",text="Try interaction",variant="primary",onClick=function()
+						app:Notify({title=theme.design.label,message="Hover, press, switch tabs and explore the controls.",status="success"})
+					end}),
+					h("Row",{style={distribute="fill"}}, {
+						h("Button",{text="Show dialog",onClick=function() app:Confirm({title="A focused moment",message="This dialog shares the selected design.",onResult=function() end}) end}),
+						h("Button",{text="Test notification",onClick=function() app:Notify({title="Theme ready",message="The entire application uses "..theme.design.label..".",status="success"}) end}),
+					}),
+					h("Toggle",{label="Reduced motion",value=reduced,onChange=setReduced}),
+				}),
+				h("Section",{name="CurrentDesign",revealOrder=1,style={width=if split then UDim.new(0.38,-8) else "100%",background="$profile",backgroundTransparency=0}}, {
+					h("Text",{text="CURRENT DESIGN",style={font=Enum.Font.Code,textSize=11,color="$profileMuted"}}),
+					h("Text",{text=theme.design.label,style={font="$typography.bold",textSize=28,color="$profileText"}}),
+					h("Text",{text="M",style={font="$typography.bold",textSize=68,height=80,color="$accent"}}),
+					h("Paragraph",{text=app:GetDesigns()[table.find(app.Designs,design)].description,style={color="$profileMuted",textSize=13}}),
+					h("Separator"),
+					h("Text",{text="CORNERS   "..theme.radius.md.." px\nCONTROLS  "..theme.controlHeight.." px\nREVEAL    "..math.round(theme.motion.reveal*1000).." ms",style={font=Enum.Font.Code,textSize=12,color="$profileText"}}),
+					h("Button",{name="DesignApply",text="Save appearance",variant="primary",onClick=function()
+						local ok,result=app.Config:Save("default")
+						app:Notify({title=if ok then "Appearance saved" else "Save failed",message=tostring(result),status=if ok then "success" else "error"})
+					end}),
+				}),
+			}),
+			h("Section",{title="For scripters",revealOrder=2}, {
+				h("Text",{text='local window = MattLib:CreateWindow({\n    Title = "My UI",\n    Design = "'..design..'",\n})\nwindow:SetDesign("Aura")',style={font=Enum.Font.Code,textSize=12,color="$muted"}}),
+			}),
+		})
+	end
+
 	local function App()
-		return h("Window",{id="gallery",title="MattLib  /  Component Studio",size={940,650},minSize=Vector2.new(300,260),openKey="RightShift"},
-			h("Sidebar",{items={{id="overview",title="Overview",content=h(Overview)},{id="inputs",title="Inputs & controls",content=h(Inputs)},
-				{id="layout",title="Layout",content=h(Layouts)},{id="feedback",title="Feedback",content=h(FeedbackPanel)},{id="appearance",title="Appearance",content=h(Appearance)}}}))
+		return h("Window",{id="gallery",title="MattLib  /  Component Studio",size={1060,730},minSize=Vector2.new(300,260),openKey="RightShift"},
+			h("Tabs",{orientation="design",defaultValue="designs",items={{id="designs",title="Designs",content=h(DesignLab)},{id="overview",title="Overview",content=h(Overview)},{id="inputs",title="Inputs & controls",content=h(Inputs)},
+				{id="layout",title="Layout",content=h(Layouts)},{id="feedback",title="Feedback",content=h(FeedbackPanel)},{id="config",title="Configs",content=h(Configurations)}}}))
 	end
 	local root=UI.mount(h(App))
-	return {library=app,root=root,Destroy=function() app:Destroy(); for _,signal in settings do signal:Destroy() end end}
+	return {library=app,root=root,Destroy=function() for _,disconnect in disconnects do disconnect() end; app:Destroy(); for _,signal in settings do signal:Destroy() end end}
 end

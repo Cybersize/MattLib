@@ -12,7 +12,12 @@ local function fade(ref, open, present)
 	Hooks.useEffect(function()
 		if not present or not ref.current then mounted.current=false; return end
 		if not mounted.current then ref.current.GroupTransparency=1; mounted.current=true end
-		return env.animator:To(ref.current,{GroupTransparency=if open then 0 else 1},env.theme:Get().motion.normal)
+		local scope=Scope.new()
+		local scale=ref.current:FindFirstChildOfClass("UIScale")
+		if scale and open then scale.Scale=0.97 end
+		scope:Add(env.animator:To(ref.current,{GroupTransparency=if open then 0 else 1},env.theme:Get().motion.normal))
+		if scale then scope:Add(env.animator:To(scale,{Scale=if open then 1 else 0.97},env.theme:Get().motion.normal)) end
+		return function() scope:Destroy() end
 	end,{open,present})
 end
 function Overlays.Modal(p)
@@ -109,7 +114,7 @@ function Overlays.Popover(p)
 	if not present then return nil end
 	return Element.portal(h("@CanvasGroup",{ref=panel,name=p.name or "Popover",style=Style.merge({width=rect.width,height=if p.scrollable==false then "auto" else math.max(1,math.min(contentHeight,rect.maxHeight-16))+16,maxHeight=rect.maxHeight,
 		position=UDim2.fromOffset(rect.x,rect.y),background="$raised",backgroundTransparency=0,borderWidth=1,borderColor="$border",
-		radius="$radius.md",padding="$spacing.sm",direction="column",gap="$spacing.xs",zIndex=z,overflow="hidden"},p.style)},
+		radius="$radius.md",padding="$spacing.sm",direction="column",gap="$spacing.xs",zIndex=z,overflow="hidden",scale=1},p.style)},
 		if p.scrollable==false then p.children else {h("ScrollArea",{contentRef=content,style={height=math.max(1,math.min(contentHeight,rect.maxHeight-16))},contentStyle={gap=4}},p.children)}),env.runtime.layers.overlay)
 end
 function Overlays.ConfirmationDialog(p)

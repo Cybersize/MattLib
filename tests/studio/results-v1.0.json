@@ -1,0 +1,69 @@
+{
+  "viewport": {
+    "y": 675,
+    "x": 812
+  },
+  "tests": [
+    {
+      "name": "functional updates preserve native instances",
+      "passed": true
+    },
+    {
+      "name": "keyed reorder and removal",
+      "passed": true
+    },
+    {
+      "name": "effects and event cleanup",
+      "passed": true
+    },
+    {
+      "name": "native theme and state styles",
+      "passed": true
+    },
+    {
+      "name": "controlled text restores an unaccepted native edit",
+      "passed": true
+    },
+    {
+      "name": "control library creates valid native properties",
+      "passed": true
+    },
+    {
+      "name": "window geometry, visibility and lifecycle",
+      "passed": true
+    },
+    {
+      "name": "native flex and modifiers",
+      "passed": true
+    },
+    {
+      "name": "HttpService config round trip and atomic validation",
+      "passed": true
+    },
+    {
+      "name": "same-id initialization disposes the previous client",
+      "passed": true
+    },
+    {
+      "name": "portals and modal lifecycle",
+      "passed": true
+    },
+    {
+      "name": "menu facade renders shared inputs",
+      "passed": true
+    }
+  ],
+  "passed": 12,
+  "failed": 0,
+  "runtime": "Roblox Studio 0.745.0.7451137, real client Play mode",
+  "recorded_utc": "2026-11-01T23:23:22.991Z",
+  "recorded_local": "2026-11-02T06:23:22.991000+07:00",
+  "bundle_sha256": "84caa1ee6bcddf0ef8888035eacd1369b550da8eab8304e9d3b1b9ac3ae8e571",
+  "source_sha256": "0498c253d5e196b2ff90c3c94288151253ffae2750d2d4e97d6ae01d9658eea6",
+  "bundle_bytes": 148440,
+  "scope": "Native client functional smoke checks; no screenshot or physical-device claims",
+  "subsequent_change": "TabNavigation and TabPanels host names added for the pending 360x640 native layout fixture; CLI suite rerun on that final bundle",
+  "pending_native_cases": [
+    "native 360x640 constrained viewport layout"
+  ]
+}

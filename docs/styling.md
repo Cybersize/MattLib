@@ -2,6 +2,8 @@
 
 Styles are Luau tables with a fixed vocabulary. Unknown keys throw an actionable error. There are no CSS strings, selectors, browser layout rules or implicit cascading.
 
+MattLib 1.1's [four designs](designs.md) supply palettes, navigation, density, geometry and motion. New applications default to MintGlass. Select a preset with `Library.new({design="Vector"})`, `CreateWindow({Design="Aura"})`, or `app:SetDesign(name)` / `window:SetDesign(name)`.
+
 ```lua
 UI.h("Button", {
     text = "Save changes", variant = "primary",
@@ -39,6 +41,10 @@ UI.h("Button", {
 | visible | Boolean native Visible. |
 | overflow | visible/hidden; scroll requires a ScrollingFrame (normally use ScrollArea). |
 | zIndex, rotation | Native numeric layer/rotation. ScreenGui uses hierarchical sibling ordering. |
+| scale | Positive finite number; an owned UIScale, tweened during hover/press updates. |
+| gradient | `{from=Color3OrToken,to=Color3OrToken,rotation=number?,transparency={start,end}?,offset=Vector2?}`; native UIGradient. Gradients multiply host colors according to Roblox behavior. |
+| borderTransparency | 0..1 native UIStroke transparency. |
+| glow, glowColor | 0..1 halo strength and optional Color3/token. Owned Frame/corner/stroke helpers; only on hosts without a list layout. |
 | imageColor, imageTransparency | ImageLabel/ImageButton native appearance. |
 | scrollbarColor | ScrollingFrame ScrollBarImageColor3. |
 | hover, pressed, focus, active, disabled | Partial style tables; applied over base in this order: active, hover, pressed, focus, disabled. |
@@ -113,5 +119,7 @@ app:SetReducedMotion(true) -- complete active goals, stop loops, make later goal
 ```
 
 Set `Library.new({reducedMotion=true})` for reduced motion from startup. `motion=false` on a primitive/host makes its style changes immediate.
+
+Presets use animated UIScale presses, gradient rotation, accent borders/halos, window slide/fade, tab indicator travel, tab panel slide/crossfade and popover/toast scale/fade. `Reveal` and Section.revealOrder add cancellable staged entrances. Theme changes cancel stale style goals, and design changes preserve the logical component tree.
 
 Advanced custom components can access `UI.useEnvironment().animator:To(instance, goals, seconds, options?)`. It returns a cancellation function suitable for an effect cleanup. Options are `channel`, `easing`, `direction`, `repeatCount`, `reverses`, `onComplete`, and `merge`. Channels must animate disjoint properties; renderer-controlled property changes take ownership when the declared prop changes. Do not continuously mutate a declared property behind the renderer. Window geometry and measured disclosure size are intentionally managed through dedicated instance ownership.

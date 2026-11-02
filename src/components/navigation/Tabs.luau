@@ -1,20 +1,27 @@
 --!nonstrict
 local Element=require(script.Parent.Parent.Parent.core.Element)
 local Hooks=require(script.Parent.Parent.Parent.core.Hooks)
+local Scope=require(script.Parent.Parent.Parent.utils.Scope)
 local Common=require(script.Parent.Parent.Common)
 local Style=require(script.Parent.Parent.Parent.styling.StyleResolver)
 local h=Element.h
 local Tabs={}
 local function Panel(p)
 	local env=Hooks.useEnvironment()
-	local ref=Hooks.useRef(nil)
+	local theme=Hooks.useTheme()
+	local ref,content=Hooks.useRef(nil),Hooks.useRef(nil)
+	local present=Common.presence(p.active,theme.motion.tab)
 	Hooks.useEffect(function()
-		if p.active then
-			ref.current.GroupTransparency=0.2
-			return env.animator:To(ref.current,{GroupTransparency=0},env.theme:Get().motion.fast)
-		end
-	end,{p.active})
-	return h("@CanvasGroup",{ref=ref,style={width="100%",height="100%",visible=p.active}},p.children)
+		if not present then return end
+		local scope=Scope.new()
+		if p.active then ref.current.GroupTransparency=1; content.current.Position=UDim2.fromOffset(theme.motion.distance,0) end
+		scope:Add(env.animator:To(ref.current,{GroupTransparency=if p.active then 0 else 1},theme.motion.tab,{channel="tab"}))
+		scope:Add(env.animator:To(content.current,{Position=UDim2.fromOffset(if p.active then 0 else -theme.motion.distance,0)},theme.motion.tab,{channel="tab"}))
+		return function() scope:Destroy() end
+	end,{p.active,present,theme.design.name})
+	return h("@CanvasGroup",{ref=ref,motion=false,attributes={MattTab=p.id,MattActive=p.active},style={width="100%",height="100%",visible=present,zIndex=if p.active then 3 else 2}}, {
+		h("Frame",{ref=content,style={width="100%",height="100%"}},p.children),
+	})
 end
 function Tabs.Tab() error("Tab must be a direct child of Tabs or Sidebar",2) end
 function Tabs.Tabs(p)
@@ -27,32 +34,82 @@ function Tabs.Tabs(p)
 			table.insert(items,{id=props.id or props.title,title=props.title,disabled=props.disabled,content=props.children})
 		end
 	end
-	local seen={}
-	for _,item in items do assert(item.id~=nil and not seen[item.id],"Tab ids must be unique"); seen[item.id]=true end
-	local value,setValue=Common.controllable(p,items[1] and items[1].id)
+	local seen,first={}
+	for _,item in items do
+		assert(item.id~=nil and not seen[item.id],"Tab ids must be unique"); seen[item.id]=true
+		if not first and not item.disabled then first=item.id end
+	end
+	local value,setValue=Common.controllable(p,first)
 	local env=Hooks.useEnvironment()
+	local theme=Hooks.useTheme()
 	local viewport=Hooks.useSignal(env.runtime.viewport)
-	local sidebar=(p.orientation=="sidebar") and viewport.X>=600
+	local layout=if p.orientation==nil or p.orientation=="design" then theme.design.navigation else p.orientation
+	local side=(layout=="sidebar" or layout=="tree") and viewport.X>=600
+	if not side and layout~="pills" then layout="top" end
+	local width=p.sidebarWidth or theme.design.sidebarWidth
+	local height=if layout=="pills" then theme.design.navHeight else (if side then 0 else 44)
 	local selected=value
-	if not seen[selected] then selected=items[1] and items[1].id end
+	if not seen[selected] then selected=first end
+	local refs=Hooks.useRef({})
+	local nav,indicator=Hooks.useRef(nil),Hooks.useRef(nil)
+	for _,item in items do refs.current[item.id]=refs.current[item.id] or {} end
+	for id in refs.current do if not seen[id] then refs.current[id]=nil end end
+	Hooks.useEffect(function()
+		local scope=Scope.new()
+		local selectedRef=refs.current[selected]
+		local button=selectedRef and selectedRef.current
+		local target=indicator.current
+		if not button or not nav.current or not target then return end
+		local function place()
+			local origin,size=nav.current.AbsolutePosition,nav.current.AbsoluteSize
+			local pos,extent=button.AbsolutePosition,button.AbsoluteSize
+			if extent.X<=0 or extent.Y<=0 then return end
+			local x,y,w,hh=pos.X-origin.X,pos.Y-origin.Y,extent.X,extent.Y
+			if side and theme.design.indicator=="rail" then x,w,y,hh=2,3,y+7,math.max(4,hh-14)
+			elseif not side and layout~="pills" then x,w,y,hh=x+10,math.max(4,w-20),y+hh-2,2 end
+			target.Visible=x+w>0 and y+hh>0 and x<size.X and y<size.Y
+			scope:Remove(scope.motion,false)
+			if scope.motion then scope.motion() end
+			scope.motion=scope:Add(env.animator:To(target,{Position=UDim2.fromOffset(x,y),Size=UDim2.fromOffset(w,hh)},theme.motion.tab,{channel="indicator"}))
+		end
+		scope:Connect(button:GetPropertyChangedSignal("AbsolutePosition"),place)
+		scope:Connect(button:GetPropertyChangedSignal("AbsoluteSize"),place)
+		scope:Connect(nav.current:GetPropertyChangedSignal("AbsolutePosition"),place)
+		scope:Connect(nav.current:GetPropertyChangedSignal("AbsoluteSize"),place)
+		place()
+		return function() scope:Destroy() end
+	end,{selected,layout,side,width,height,theme.design.name,#items})
 	local navigation=Element.list(items,function(item)
-		return h("Button",{name="Tab:"..tostring(item.id),text=item.title or tostring(item.id),disabled=item.disabled,variant="ghost",active=selected==item.id,
-			style={width=if sidebar then "100%" else p.tabWidth or 120,height=38,textAlign=if sidebar then "left" else "center",
-				active={background="$hover",backgroundTransparency=0,color="$accent"}},
-			onClick=function() setValue(item.id) end,accessibleName=(item.title or tostring(item.id))..(if selected==item.id then ", selected tab" else ", tab")})
+		local active=selected==item.id
+		local block=layout=="tree"
+		return h("Button",{name="Tab:"..tostring(item.id),ref=refs.current[item.id],text=(if block then "›  " else "")..(item.title or tostring(item.id)),
+			disabled=item.disabled,variant="ghost",active=active,style={width=if side then "100%" else p.tabWidth or 120,height=if block then 34 else 38,
+				textAlign=if side then "left" else "center",radius=if layout=="pills" then "$radius.pill" else "$radius.md",scale=1,
+				color=if active and (block or layout=="pills") then "$accentText" elseif active then "$accent" else "$muted",
+				active={background=if block then "$accent" else "$accentSoft",backgroundTransparency=if layout=="pills" then 1 elseif side then 0 else 1},
+				hover={background=if active and block then "$accent" else "$hover",backgroundTransparency=if layout=="pills" and active then 1 else 0,scale=1},pressed={scale=0.98}},
+			onClick=function() setValue(item.id) end,accessibleName=(item.title or tostring(item.id))..(if active then ", selected tab" else ", tab")})
 	end,function(item) return item.id end)
 	local panels=Element.list(items,function(item)
-		return h(Panel,{active=selected==item.id},if p.unmountInactive and selected~=item.id then {} else {
-			h("ScrollArea",{contentStyle={padding=p.padding or 16,gap=16}},item.content or {}),
+		return h(Panel,{active=selected==item.id,id=item.id},if p.unmountInactive and selected~=item.id then {} else {
+			h("ScrollArea",{contentStyle={padding=p.padding or theme.spacing.lg,gap=theme.spacing.lg}},item.content or {}),
 		})
 	end,function(item) return item.id end)
-	return h("Frame",{name=p.name,style=Style.merge({width="100%",height="100%"},p.style)}, {
-		h("ScrollArea",{name="TabNavigation",style={width=if sidebar then p.sidebarWidth or 168 else "100%",height=if sidebar then "100%" else 44},
-			contentStyle={direction=if sidebar then "column" else "row",gap=4,padding=4},
-			native={AutomaticCanvasSize=if sidebar then Enum.AutomaticSize.Y else Enum.AutomaticSize.X,
-				ScrollingDirection=if sidebar then Enum.ScrollingDirection.Y else Enum.ScrollingDirection.X}},navigation),
-		h("Frame",{name="TabPanels",style={width=if sidebar then UDim.new(1,-(p.sidebarWidth or 168)-8) else "100%",height=if sidebar then "100%" else UDim.new(1,-48),
-			position=if sidebar then UDim2.fromOffset((p.sidebarWidth or 168)+8,0) else UDim2.fromOffset(0,48)}},panels),
+	local inset=if layout=="pills" then theme.design.inset else 0
+	local treeHeader=if layout=="tree" then 34 else 0
+	return h("Frame",{name=p.name,style=Style.merge({width="100%",height="100%"},p.style),attributes={MattNavigation=layout}}, {
+		h("Frame",{name="TabNavigation",ref=nav,style={width=if side then width else UDim.new(1,-inset*2),height=if side then "100%" else height,
+			position=UDim2.fromOffset(inset,if layout=="pills" then 8 else 0),background=if layout=="pills" then "$raised" else "$chrome",
+			backgroundTransparency=if layout=="pills" then 0.15 else 0.35,radius=if layout=="pills" then "$radius.pill" else 0,overflow="hidden"}}, {
+			h("Text",{text="WORKSPACE",style={height=treeHeader,visible=treeHeader>0,paddingX=12,textSize=11,font=Enum.Font.Code,color="$muted"}}),
+			h("Frame",{ref=indicator,name="TabIndicator",motion=false,native={Size=UDim2.new(),Visible=false},
+				style={background="$accent",backgroundTransparency=0,radius=if layout=="pills" then "$radius.pill" else "$radius.sm",zIndex=if layout=="pills" or layout=="tree" then 1 else 3}}),
+			h("ScrollArea",{name="TabNavigationScroll",style={width="100%",height=UDim.new(1,-treeHeader),position=UDim2.fromOffset(0,treeHeader),zIndex=2},
+				contentStyle={direction=if side then "column" else "row",width=if side then UDim.new(1,-8) else "auto",gap=4,padding=4},
+				native={AutomaticCanvasSize=if side then Enum.AutomaticSize.Y else Enum.AutomaticSize.X,ScrollingDirection=if side then Enum.ScrollingDirection.Y else Enum.ScrollingDirection.X}},navigation),
+		}),
+		h("Frame",{name="TabPanels",style={width=if side then UDim.new(1,-width-8) else "100%",height=if side then "100%" else UDim.new(1,-height-inset),
+			position=if side then UDim2.fromOffset(width+8,0) else UDim2.fromOffset(0,height+inset)}},panels),
 	})
 end
 function Tabs.Sidebar(p)

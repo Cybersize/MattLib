@@ -4,6 +4,7 @@ local Hooks=require(script.core.Hooks)
 local Signal=require(script.core.Signal)
 local Renderer=require(script.core.Renderer)
 local Theme=require(script.styling.Theme)
+local Designs=require(script.styling.Designs)
 local Style=require(script.styling.StyleResolver)
 local Adapter=require(script.runtime.Adapter)
 local Input=require(script.runtime.Input)
@@ -19,6 +20,7 @@ local Sections=require(script.components.layout.Sections)
 local OverlayComponents=require(script.components.layout.Overlays)
 local Windows=require(script.components.layout.Window)
 local Tabs=require(script.components.navigation.Tabs)
+local DesignPicker=require(script.components.navigation.DesignPicker)
 local Boolean=require(script.components.inputs.Boolean)
 local TextInputs=require(script.components.inputs.TextInput)
 local Sliders=require(script.components.inputs.Slider)
@@ -29,7 +31,7 @@ local Keybind=require(script.components.inputs.Keybind)
 local Feedback=require(script.components.feedback.Feedback)
 local Facade=require(script.menu.Facade)
 Primitives.register()
-for _,group in {Sections,OverlayComponents,Windows,Tabs,Boolean,TextInputs,Dropdowns,Selection,ColorPicker,Keybind,Feedback} do
+for _,group in {Sections,OverlayComponents,Windows,Tabs,DesignPicker,Boolean,TextInputs,Dropdowns,Selection,ColorPicker,Keybind,Feedback} do
 	for name,component in group do Element.register(name,component) end
 end
 Element.register("Slider",Sliders.Slider); Element.register("RangeSlider",Sliders.RangeSlider)
@@ -38,8 +40,8 @@ local Library={}
 Library.__index=Library
 function Library.new(options)
 	options=options or {}
-	local self=setmetatable({Version="1.0.0",options=options,_roots={},_scope=Scope.new(),_destroyed=false},Library)
-	self.Theme=Theme.new(options.theme or "Dark")
+	local self=setmetatable({Version="1.1.0",options=options,_roots={},_scope=Scope.new(),_destroyed=false,Designs=Designs.Names},Library)
+	self.Theme=Theme.new(Designs.resolve(options.design or "MintGlass",options.theme))
 	self.Config=Config.new(game:GetService("HttpService"),Adapter.capabilities(options.capabilities),options.config)
 	self.UI={h=Element.h,Fragment=Element.Fragment,portal=Element.portal,list=Element.list,signal=Signal.new,derived=Signal.derived,batch=Signal.batch,
 		useState=Hooks.useState,useRef=Hooks.useRef,useMemo=Hooks.useMemo,useEffect=Hooks.useEffect,useSignal=Hooks.useSignal,useTheme=Hooks.useTheme,
@@ -77,7 +79,21 @@ function Library:Flush()
 	for root in table.clone(self._roots) do if root.alive then root:Flush() end end
 end
 function Library:CreateWindow(options) return Facade.create(self,options) end
-function Library:SetTheme(theme) assert(not self._destroyed,"Library is destroyed"); self.Theme:Set(theme) end
+function Library:SetTheme(theme)
+	assert(not self._destroyed,"Library is destroyed")
+	if type(theme)=="string" then self.Theme:Set(Designs.resolve(self:GetDesign(),theme)) else self.Theme:Extend(theme) end
+end
+function Library:SetDesign(name)
+	assert(not self._destroyed,"Library is destroyed")
+	self.Theme:Set(Designs.resolve(name))
+	return self
+end
+function Library:GetDesign() return self.Theme:Get().design.name end
+function Library:GetDesigns() return Designs.list() end
+function Library:SetEffectIntensity(value)
+	assert(type(value)=="number" and value>=0 and value<=1,"Effect intensity must be 0..1")
+	self.Theme:Extend({effects={intensity=value}})
+end
 function Library:SetReducedMotion(value) self:_ensure().animator:SetReducedMotion(value) end
 function Library:Notify(options) return self:_ensure().notifications:Push(options) end
 function Library:Confirm(options)

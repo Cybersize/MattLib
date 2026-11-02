@@ -1,7 +1,7 @@
 {
-  "bundle_sha256": "184d489b452b26294d7e0729734893e1d1e2c39df5f880c6070bae6168e87aac",
-  "bytes": 159289,
+  "bundle_sha256": "e73903f9eb40e45db521178216d1d12f7bdcd8b8f2b7b69f2f9b6af509de23b7",
+  "bytes": 187702,
   "entrypoint": "Preview.lua",
   "network_requests_inside_preview": 0,
-  "preview_sha256": "cbca0812dcce860835297acbf4ab17c7f53957bff3f6afac716f1c60efaa8ccf"
+  "preview_sha256": "1840c224adb44548cb1336b4e1cd57f5647236b513054d532107df14aaecb05c"
 }

@@ -3,6 +3,9 @@
     "y": 675,
     "x": 812
   },
+  "version": "1.1.0",
+  "passed": 20,
+  "failed": 0,
   "tests": [
     {
       "name": "functional updates preserve native instances",
@@ -51,19 +54,45 @@
     {
       "name": "menu facade renders shared inputs",
       "passed": true
+    },
+    {
+      "name": "all four native design layouts preserve state and instances",
+      "passed": true
+    },
+    {
+      "name": "native glow gradient and scale modifiers cleanly change",
+      "passed": true
+    },
+    {
+      "name": "native per-window designs and minimized header sizes",
+      "passed": true
+    },
+    {
+      "name": "native gallery factory MintGlass",
+      "passed": true
+    },
+    {
+      "name": "native gallery factory Ember",
+      "passed": true
+    },
+    {
+      "name": "native gallery factory Vector",
+      "passed": true
+    },
+    {
+      "name": "native gallery factory Aura",
+      "passed": true
+    },
+    {
+      "name": "native 360x640 constrained viewport layout",
+      "passed": true
     }
   ],
-  "passed": 12,
-  "failed": 0,
-  "runtime": "Roblox Studio 0.745.0.7451137, real client Play mode",
-  "recorded_utc": "2026-11-01T23:23:22.991Z",
-  "recorded_local": "2026-11-02T06:23:22.991000+07:00",
-  "bundle_sha256": "84caa1ee6bcddf0ef8888035eacd1369b550da8eab8304e9d3b1b9ac3ae8e571",
-  "source_sha256": "0498c253d5e196b2ff90c3c94288151253ffae2750d2d4e97d6ae01d9658eea6",
-  "bundle_bytes": 148440,
-  "scope": "Native client functional smoke checks; no screenshot or physical-device claims",
-  "subsequent_change": "TabNavigation and TabPanels host names added for the pending 360x640 native layout fixture; CLI suite rerun on that final bundle",
-  "pending_native_cases": [
-    "native 360x640 constrained viewport layout"
-  ]
+  "runtime": "Roblox Studio 0.745.0.7451137 real Play client",
+  "recorded_utc": "2026-11-02T03:09:48.164Z",
+  "recorded_local": "2026-11-02T10:09:48.164000+07:00",
+  "bundle_sha256": "e73903f9eb40e45db521178216d1d12f7bdcd8b8f2b7b69f2f9b6af509de23b7",
+  "source_sha256": "ef3c7893272e8e457d9f919962ed73c65d9e31191dc1a6a8f93c20b7cda27a7b",
+  "scope": "Native functional/property/layout checks, including all four designs and 360x640 constrained layers. No physical device or visual screenshot claims.",
+  "visual_capture": "FrameArrived timeout; retry ended when the user stopped Computer Use with physical Escape"
 }

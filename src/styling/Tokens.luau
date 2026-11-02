@@ -5,8 +5,11 @@ local shared = {
 	radius = { sm = 4, md = 7, lg = 11, pill = 999 },
 	typography = { font = Enum.Font.BuilderSans, medium = Enum.Font.BuilderSansMedium,
 		bold = Enum.Font.BuilderSansBold, small = 12, body = 14, title = 18, display = 26 },
-	motion = { fast = 0.12, normal = 0.18, slow = 0.24 },
+	motion = { fast = 0.12, normal = 0.18, slow = 0.24, reveal=0.22, tab=0.18, distance=10, stagger=0.04 },
 	controlHeight = 38,
+	design={name="Classic",label="Classic",navigation="sidebar",sidebarWidth=168,navHeight=44,titleHeight=44,section="card",indicator="line",inset=0},
+	effects={intensity=1,glow=0,hoverScale=1.012,pressScale=0.975,gradient=0,ambient=0},
+	control={switchWidth=40,switchHeight=22,thumbSize=16,switchRadius=999,rowHeight=44},
 }
 local Tokens = {}
 Tokens.Dark = {
@@ -17,6 +20,8 @@ Tokens.Dark = {
 	text = rgb(232, 236, 245), muted = rgb(154, 165, 185), subtle = rgb(113, 125, 148),
 	disabled = rgb(82, 92, 112), danger = rgb(249, 119, 133), success = rgb(104, 210, 166),
 	warning = rgb(239, 191, 104), overlay = rgb(3, 5, 12),
+	accentDeep=rgb(109,130,232),accentSoft=rgb(33,42,63),chrome=rgb(24,27,35),
+	profile=rgb(24,27,35),profileText=rgb(232,236,245),profileMuted=rgb(154,165,185),
 }
 Tokens.Light = {
 	background = rgb(242, 244, 249), surface = rgb(255, 255, 255), raised = rgb(234, 238, 246),
@@ -26,6 +31,8 @@ Tokens.Light = {
 	text = rgb(28, 34, 49), muted = rgb(90, 104, 128), subtle = rgb(114, 125, 147),
 	disabled = rgb(151, 160, 177), danger = rgb(185, 47, 69), success = rgb(26, 125, 87),
 	warning = rgb(151, 99, 17), overlay = rgb(12, 17, 29),
+	accentDeep=rgb(63,80,188),accentSoft=rgb(228,234,251),chrome=rgb(247,249,252),
+	profile=rgb(255,255,255),profileText=rgb(28,34,49),profileMuted=rgb(90,104,128),
 }
 for _, theme in { Tokens.Dark, Tokens.Light } do
 	for key, value in shared do theme[key] = value end

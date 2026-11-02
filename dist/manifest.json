@@ -1,6 +1,6 @@
 {
-  "bundle_sha256": "184d489b452b26294d7e0729734893e1d1e2c39df5f880c6070bae6168e87aac",
-  "bytes": 148475,
+  "bundle_sha256": "e73903f9eb40e45db521178216d1d12f7bdcd8b8f2b7b69f2f9b6af509de23b7",
+  "bytes": 171071,
   "dependencies": {
     "animation/Animator": [
       "utils/Scope",
@@ -20,7 +20,8 @@
     "components/inputs/Boolean": [
       "core/Element",
       "styling/StyleResolver",
-      "components/Common"
+      "components/Common",
+      "core/Hooks"
     ],
     "components/inputs/ColorPicker": [
       "core/Element",
@@ -76,18 +77,26 @@
       "core/Element",
       "core/Hooks",
       "styling/Theme",
+      "styling/Designs",
       "components/Common",
       "styling/StyleResolver"
+    ],
+    "components/navigation/DesignPicker": [
+      "core/Element",
+      "core/Hooks",
+      "styling/Designs"
     ],
     "components/navigation/Tabs": [
       "core/Element",
       "core/Hooks",
+      "utils/Scope",
       "components/Common",
       "styling/StyleResolver"
     ],
     "components/primitives/Primitives": [
       "core/Element",
-      "styling/StyleResolver"
+      "styling/StyleResolver",
+      "core/Hooks"
     ],
     "config/Config": [
       "core/Signal"
@@ -123,6 +132,7 @@
       "core/Signal",
       "core/Renderer",
       "styling/Theme",
+      "styling/Designs",
       "styling/StyleResolver",
       "runtime/Adapter",
       "runtime/Input",
@@ -138,6 +148,7 @@
       "components/layout/Overlays",
       "components/layout/Window",
       "components/navigation/Tabs",
+      "components/navigation/DesignPicker",
       "components/inputs/Boolean",
       "components/inputs/TextInput",
       "components/inputs/Slider",
@@ -153,7 +164,8 @@
       "core/Hooks",
       "core/Signal",
       "utils/Scope",
-      "components/Common"
+      "components/Common",
+      "styling/Designs"
     ],
     "runtime/Adapter": [
       "utils/Scope",
@@ -167,6 +179,9 @@
     "runtime/Overlays": [
       "utils/Scope",
       "runtime/Input"
+    ],
+    "styling/Designs": [
+      "styling/Theme"
     ],
     "styling/StyleResolver": [
       "styling/Theme"
@@ -187,7 +202,7 @@
       "runtime/Input"
     ]
   },
-  "modules": 34,
-  "source_sha256": "5b76aca207df615c394c5688ce73b8d511671a151e49ba9707ad260ccd292132",
-  "version": "1.0.0"
+  "modules": 36,
+  "source_sha256": "ef3c7893272e8e457d9f919962ed73c65d9e31191dc1a6a8f93c20b7cda27a7b",
+  "version": "1.1.0"
 }

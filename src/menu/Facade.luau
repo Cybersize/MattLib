@@ -4,6 +4,7 @@ local Hooks=require(script.Parent.Parent.core.Hooks)
 local Signal=require(script.Parent.Parent.core.Signal)
 local Scope=require(script.Parent.Parent.utils.Scope)
 local Common=require(script.Parent.Parent.components.Common)
+local Designs=require(script.Parent.Parent.styling.Designs)
 local h=Element.h
 local Facade={}
 local Handle={}
@@ -85,7 +86,7 @@ local function ContainerView(p)
 		return h(if child.container then ContainerView else ControlView,{record=child})
 	end,function(child) return child.id end)
 	return h(if record.kind=="Section" then "Section" elseif record.kind=="Collapsible" then "Collapsible" else "Column",
-		{title=record.options.Title,description=record.options.Description,defaultOpen=record.options.DefaultOpen,style=record.options.Style},children)
+		{title=record.options.Title,description=record.options.Description,defaultOpen=record.options.DefaultOpen,style=record.options.Style,revealOrder=p.order or 0},children)
 end
 local function WindowView(p)
 	local window=p.window
@@ -96,12 +97,12 @@ local function WindowView(p)
 	end
 	local o=window.options
 	return h("Window",{id=window.id,name=window.name,title=o.Title or "Application",size=o.Size or {720,500},position=o.Position,
-		minSize=o.MinSize,maxSize=o.MaxSize,fixedSize=o.FixedSize,openKey=o.OpenKey,theme=o.Theme,windowRef=window.windowRef,
+		minSize=o.MinSize,maxSize=o.MaxSize,fixedSize=o.FixedSize,openKey=o.OpenKey,theme=o.Theme,design=o.Design,windowRef=window.windowRef,
 		onClose=function()
 			window.scope:Delay(if window.library._env.animator.reducedMotion then 0 else window.library.Theme:Get().motion.normal,function() window:Destroy() end)
 			if o.OnClose then o.OnClose() end
 		end}, {
-		h("Tabs",{items=items,orientation=if o.Navigation=="Top" then "top" else "sidebar",defaultValue=items[1] and items[1].id}),
+		h("Tabs",{items=items,orientation=if o.Navigation=="Top" then "top" elseif o.Navigation=="Sidebar" then "sidebar" else "design",defaultValue=items[1] and items[1].id}),
 	})
 end
 local function bump(record) if record.alive then record.revision:update(function(n) return n+1 end) end end
@@ -173,6 +174,8 @@ function Handle:SetSize(width,height)
 	if self.windowRef.current then self.windowRef.current:SetSize(width,height) end
 end
 function Handle:SetTheme(theme) self:Update({Theme=theme}) end
+function Handle:SetDesign(design) Designs.get(design); self:Update({Design=design}); return self end
+function Handle:GetDesign() return self.options.Design or self.library:GetDesign() end
 function Handle:GetInstance() return self.root and self.root:Find(self.name) end
 function Handle:GetRect() return self.windowRef.current and self.windowRef.current:GetRect() end
 local function addControl(parent,kind,options)

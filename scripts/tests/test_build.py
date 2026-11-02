@@ -79,7 +79,7 @@ class DistributionTests(unittest.TestCase):
         text, _ = build.bundle()
         self.assertEqual((build.ROOT / "dist/Library.lua").read_text(encoding="utf-8"), text)
 
-    def test_showcase_contains_identical_bundle_and_four_examples(self):
+    def test_showcase_contains_identical_bundle_and_five_examples(self):
         tree = ElementTree.parse(build.ROOT / "dist/MattLib-Showcase.rbxlx")
         modules = {}
         for item in tree.findall(".//Item[@class='ModuleScript']"):
@@ -87,7 +87,7 @@ class DistributionTests(unittest.TestCase):
             source = item.find("./Properties/ProtectedString[@name='Source']").text
             modules[name] = source
         self.assertEqual(modules["MattLib"], build.bundle()[0])
-        self.assertTrue({"Gallery", "Dashboard", "Basic", "Declarative", "AsterSmoke"} <= set(modules))
+        self.assertTrue({"Gallery", "Dashboard", "Basic", "Declarative", "Designs", "AsterSmoke"} <= set(modules))
 
 if __name__ == "__main__":
     unittest.main()

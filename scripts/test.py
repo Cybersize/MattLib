@@ -25,19 +25,19 @@ def main():
     mock = (ROOT / "tests/MockRoblox.luau").read_text(encoding="utf-8")
     cases = (ROOT / "tests/Framework.spec.luau").read_text(encoding="utf-8")
     examples = "local Examples={}\n"
-    for folder in ("basic", "declarative", "component-gallery", "complex-dashboard"):
+    for folder in ("basic", "declarative", "component-gallery", "complex-dashboard", "design-selection"):
         source=(ROOT/f"examples/{folder}/init.luau").read_text(encoding="utf-8")
         examples+=f"Examples[{json.dumps(folder)}]=(function()\n{source}\nend)()\n"
     runner = build_dir / "tests.generated.luau"
     runner.write_text("local Mock=(function()\n" + mock + "\nend)()\n" +
-        "local Instance,Vector2,Color3,UDim,UDim2,Enum,typeof,task,game,TweenInfo,workspace,warn = " +
-        "Mock.Instance,Mock.Vector2,Mock.Color3,Mock.UDim,Mock.UDim2,Mock.Enum,Mock.typeof,Mock.task,Mock.game,Mock.TweenInfo,Mock.workspace,Mock.warn\n" +
+        "local Instance,Vector2,Color3,UDim,UDim2,Enum,typeof,task,game,TweenInfo,workspace,warn,ColorSequence,NumberSequence = " +
+        "Mock.Instance,Mock.Vector2,Mock.Color3,Mock.UDim,Mock.UDim2,Mock.Enum,Mock.typeof,Mock.task,Mock.game,Mock.TweenInfo,Mock.workspace,Mock.warn,Mock.ColorSequence,Mock.NumberSequence\n" +
         "local createBundle=function()\n" + bundle + "\nend\nlocal Library=createBundle()\n" + examples + cases, encoding="utf-8", newline="\n")
     preview_source,preview_manifest=build_preview.preview()
     preview_runner=build_dir/'preview.generated.luau'
     preview_runner.write_text('local Mock=(function()\n'+mock+'\nend)()\n'+
-        'local Instance,Vector2,Color3,UDim,UDim2,Enum,typeof,task,game,TweenInfo,workspace,warn = '+
-        'Mock.Instance,Mock.Vector2,Mock.Color3,Mock.UDim,Mock.UDim2,Mock.Enum,Mock.typeof,Mock.task,Mock.game,Mock.TweenInfo,Mock.workspace,Mock.warn\n'+
+        'local Instance,Vector2,Color3,UDim,UDim2,Enum,typeof,task,game,TweenInfo,workspace,warn,ColorSequence,NumberSequence = '+
+        'Mock.Instance,Mock.Vector2,Mock.Color3,Mock.UDim,Mock.UDim2,Mock.Enum,Mock.typeof,Mock.task,Mock.game,Mock.TweenInfo,Mock.workspace,Mock.warn,Mock.ColorSequence,Mock.NumberSequence\n'+
         'local app=(function()\n'+preview_source+'\nend)()\nMock.flush()\nassert(app.root.alive)\n'+
         'assert(app.library:GetDiagnostics().windows==1)\napp.Destroy()\nMock.advance(2)\n'+
         'for key,value in app.library:GetDiagnostics() do if key~="renders" then assert(value==0,"Preview leaked "..key) end end\n'+

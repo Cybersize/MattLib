@@ -10,7 +10,8 @@
         "Gallery": { "$path": "examples/component-gallery" },
         "Dashboard": { "$path": "examples/complex-dashboard" },
         "Basic": { "$path": "examples/basic" },
-        "Declarative": { "$path": "examples/declarative" }
+        "Declarative": { "$path": "examples/declarative" },
+        "Designs": { "$path": "examples/design-selection" }
       }
     },
     "StarterPlayer": {
